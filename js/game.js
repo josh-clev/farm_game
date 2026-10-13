@@ -65,6 +65,7 @@ function renderShop() {
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
     card.dataset.item = slot.itemKey;
+    card.dataset.layoutKey = String(slotIndex);
     if (card.dataset.renderedItem !== slot.itemKey) {
       card.innerHTML = `<span class="shop-icon" aria-hidden="true"></span><span class="shop-details"><span class="shop-price"><img class="coin-icon" src="assets/coin_icon.png" alt="">${item.price}</span></span>`;
       card.dataset.renderedItem = slot.itemKey;
@@ -328,12 +329,6 @@ function setDesktopPreviewRatio() {
 setDesktopPreviewRatio();
 window.addEventListener("resize", setDesktopPreviewRatio);
 buildResourcePools();
-shopCards.forEach((card) => {
-  const item = shopItems[card.dataset.item];
-  card.dataset.layoutKey = String(shopCards.indexOf(card));
-  card.innerHTML = `<span class="shop-icon" aria-hidden="true"></span><span class="shop-details"><span class="shop-price"><img class="coin-icon" src="assets/coin_icon.png" alt="">${item.price}</span></span>`;
-  loadGraphic(item.asset, (source) => card.querySelector(".shop-icon").style.backgroundImage = `url("${source}")`);
-});
 orders = Array.from({ length: 5 }, createOrder);
 renderOrders();
 
@@ -613,7 +608,6 @@ async function useTool(plot) {
     : null;
   if (selectedCrop) {
     if (!canPlantSeed(plot, selectedCrop)) return;
-    renderTools();
     plantCrop(plot, selectedCrop);
     selectedTool = null;
   } else if (selectedTool === "water") {
