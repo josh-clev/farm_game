@@ -22,6 +22,7 @@
   const shopItems = {
     "weed-killer": { name: "Weed Killer", price: 10, asset: "weed_killer_icon", tool: "weed-killer" },
     fertiliser: { name: "Fertiliser", price: 7, asset: "fertiliser_icon", tool: "fertiliser" },
+    "plot-upgrade": { name: "Plot Upgrade", price: 25, asset: "plot_upgrade", tool: "plot-upgrade" },
     "water-upgrade": { name: "Water Upgrade", price: 30, asset: "water_upgrade_icon", upgrade: "water" },
     "harvest-upgrade": { name: "Harvest Upgrade", price: 40, asset: "harvest_upgrade_icon", upgrade: "cut" },
     ...seedItems,

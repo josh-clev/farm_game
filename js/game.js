@@ -421,6 +421,12 @@ function canPlantSeed(plot, crop) {
     && Boolean(crop);
 }
 
+function canUpgradePlot(plot) {
+  return getPlotOwner(plot) === null
+    && !plot.dataset.crop
+    && !plot.querySelector(".spawn-timer");
+}
+
 function plantCrop(plot, crop) {
   const cropIcon = document.createElement("span");
   cropIcon.className = "crop";
@@ -542,6 +548,8 @@ function updateEligiblePlots() {
       : null;
     const hasUse = selectedCrop
       ? canPlantSeed(plot, selectedCrop)
+      : selectedTool === "plot-upgrade"
+      ? canUpgradePlot(plot)
       : selectedTool === "weed-killer" || selectedTool === "fertiliser"
       ? true
       : turnActions[selectedTool] > 0;
@@ -616,6 +624,11 @@ async function useTool(plot) {
   if (selectedCrop) {
     if (!canPlantSeed(plot, selectedCrop)) return;
     plantCrop(plot, selectedCrop);
+    selectedTool = null;
+  } else if (selectedTool === "plot-upgrade") {
+    if (!canUpgradePlot(plot)) return;
+    plot.classList.add(currentPlayer === 1 ? "player-one-plot" : "player-two-plot");
+    plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}, Player ${currentPlayer} territory`);
     selectedTool = null;
   } else if (selectedTool === "water") {
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
