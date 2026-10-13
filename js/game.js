@@ -48,7 +48,7 @@ const playerResources = {
   1: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
   2: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
 };
-const playerCoins = { 1: 0, 2: 0 };
+const playerCoins = { 1: 10, 2: 10 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
@@ -103,8 +103,8 @@ function buildResourcePools() {
 
     const coinItem = document.createElement("div");
     coinItem.className = "resource-item coin-item";
-    coinItem.setAttribute("aria-label", `Player ${player} coins: 0`);
-    coinItem.innerHTML = `<span class="resource-icon coin-icon" aria-hidden="true"></span><strong class="resource-count" data-player-coins="${player}">0</strong>`;
+    coinItem.setAttribute("aria-label", `Player ${player} coins: ${playerCoins[player]}`);
+    coinItem.innerHTML = `<span class="resource-icon coin-icon" aria-hidden="true"></span><strong class="resource-count" data-player-coins="${player}">${playerCoins[player]}</strong>`;
     resourceList.append(coinItem);
 
     crops.forEach((crop) => {
