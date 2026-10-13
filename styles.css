@@ -729,6 +729,12 @@ body {
     0 2px 0 #9f641f;
 }
 
+.next-turn:disabled {
+  cursor: not-allowed;
+  filter: saturate(0.45);
+  opacity: 0.52;
+}
+
 .next-turn:focus-visible {
   outline: 3px solid white;
   outline-offset: 3px;

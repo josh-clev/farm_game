@@ -405,6 +405,7 @@ function plantCrop(plot, crop) {
 
   plot.dataset.crop = crop.name;
   plot.dataset.water = "0";
+  plot.dataset.turnWatered = "0";
   plot.dataset.waterNeeded = String(crop.waterNeeded);
   plot.append(cropIcon);
   const progress = document.createElement("span");
@@ -498,7 +499,10 @@ function canUseTool(plot, tool) {
 
   const water = Number(plot.dataset.water);
   const waterNeeded = Number(plot.dataset.waterNeeded);
-  return tool === "water" ? water < waterNeeded : water >= waterNeeded;
+  const turnWatered = Number(plot.dataset.turnWatered || 0);
+  return tool === "water"
+    ? water < waterNeeded && turnWatered < 2
+    : water >= waterNeeded;
 }
 
 function updateEligiblePlots() {
@@ -533,6 +537,13 @@ function renderTools() {
     button.setAttribute("aria-label", `${tool === "water" ? "Water" : "Harvest"}: ${turnActions[tool]} remaining`);
   });
 
+  const mustUseWater = turnActions.water > 0;
+  nextTurnButton.disabled = mustUseWater;
+  nextTurnButton.setAttribute(
+    "aria-label",
+    mustUseWater ? `Next Turn: use all ${turnActions.water} water actions first` : "Next Turn",
+  );
+
   updateEligiblePlots();
   renderShop();
 }
@@ -554,6 +565,7 @@ async function removeCrop(plot) {
   plot.querySelector(".crop-progress")?.remove();
   delete plot.dataset.crop;
   delete plot.dataset.water;
+  delete plot.dataset.turnWatered;
   delete plot.dataset.waterNeeded;
   plot.classList.remove("fully-grown");
   plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
@@ -562,6 +574,7 @@ async function removeCrop(plot) {
 async function useTool(plot) {
   if (selectedTool === "water") {
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
+    plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
     turnActions.water -= 1;
     updateCropProgress(plot);
   } else if (selectedTool === "cut") {
@@ -660,7 +673,7 @@ function announceTurn() {
 }
 
 nextTurnButton.addEventListener("click", () => {
-  if (isActionLocked()) return;
+  if (isActionLocked() || turnActions.water > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
@@ -675,6 +688,9 @@ nextTurnButton.addEventListener("click", () => {
   );
   replacePurchasedShopItems();
   advanceCropSpawnTimer();
+  grid.querySelectorAll(".plot").forEach((plot) => {
+    if (plot.dataset.crop) plot.dataset.turnWatered = "0";
+  });
   currentPlayer = currentPlayer === 1 ? 2 : 1;
   selectedTool = null;
   turnActions = {
