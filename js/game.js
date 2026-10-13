@@ -250,7 +250,9 @@ function createOrder() {
     const crop = crops.find((candidate) => candidate.name === item.crop);
     return total + item.amount * crop.marketValue;
   }, 0);
-  const reward = Math.max(1, Math.round(fullReward * 0.25));
+  const resourceCount = items.reduce((total, item) => total + item.amount, 0);
+  const rewardBoost = resourceCount >= 5 ? 5 : resourceCount >= 4 ? 3 : resourceCount >= 3 ? 2 : 0;
+  const reward = Math.ceil(fullReward + rewardBoost);
   return { id: nextOrderId++, items, reward, filled: false };
 }
 

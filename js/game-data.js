@@ -13,7 +13,7 @@
     const key = `seed-${crop.name.toLowerCase()}`;
     return [key, {
       name: `${crop.name} Seed`,
-      get price() { return Math.max(1, Math.round(crop.marketValue * 0.75) - 1); },
+      get price() { return crop.marketValue - 1; },
       asset: `${crop.name.toLowerCase()}_seed`,
       seedCrop: crop.name,
     }];
