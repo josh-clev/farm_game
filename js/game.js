@@ -32,10 +32,17 @@ const playerUpgrades = {
 };
 
 const shopItemKeys = Object.keys(shopItems);
-const shopSlots = shopCards.map((card) => ({
-  itemKey: card.dataset.item,
-  purchased: false,
-}));
+function drawShopItem(excludedKeys = new Set()) {
+  const choices = shopItemKeys.filter((itemKey) => !excludedKeys.has(itemKey));
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+const initialShopKeys = new Set();
+const shopSlots = shopCards.map(() => {
+  const itemKey = drawShopItem(initialShopKeys);
+  initialShopKeys.add(itemKey);
+  return { itemKey, purchased: false };
+});
 
 const playerResources = {
   1: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
@@ -68,8 +75,9 @@ function renderShop() {
     card.classList.toggle("is-disabled", unavailable);
     card.setAttribute("aria-disabled", String(unavailable));
     card.tabIndex = unavailable ? -1 : 0;
-    card.classList.toggle("is-selected-item", selectedTool === item.tool);
-    card.setAttribute("aria-pressed", String(selectedTool === item.tool));
+    const selectedItemTool = item.seedCrop ? `seed:${item.seedCrop}` : item.tool;
+    card.classList.toggle("is-selected-item", selectedTool === selectedItemTool);
+    card.setAttribute("aria-pressed", String(selectedTool === selectedItemTool));
     card.setAttribute(
       "aria-label",
       slot.purchased ? `${item.name}, sold out until next turn` : `${item.name}, costs ${item.price} coins`,
@@ -78,10 +86,11 @@ function renderShop() {
 }
 
 function replacePurchasedShopItems() {
+  const visibleKeys = new Set(shopSlots.filter((slot) => !slot.purchased).map((slot) => slot.itemKey));
   shopSlots.forEach((slot) => {
     if (!slot.purchased) return;
-    const choices = shopItemKeys.filter((itemKey) => itemKey !== slot.itemKey);
-    slot.itemKey = choices[Math.floor(Math.random() * choices.length)];
+    slot.itemKey = drawShopItem(new Set([slot.itemKey, ...visibleKeys]));
+    visibleKeys.add(slot.itemKey);
     slot.purchased = false;
   });
 }
