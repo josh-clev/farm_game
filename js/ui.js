@@ -172,11 +172,14 @@
     const bounds = crop.getBoundingClientRect();
     const treatment = document.createElement("span");
     const asset = type === "water" ? "watering_can" : `${type.replace("-", "_")}_icon`;
-    treatment.className = `treatment-animation treatment-${type}`;
-    treatment.style.left = `${bounds.left + bounds.width / 2}px`;
-    treatment.style.top = `${bounds.top + bounds.height * 0.46}px`;
+    const isPlayerTwo = plot.classList.contains("player-two-plot");
+    const sideOffset = bounds.width * (isPlayerTwo ? 0.56 : -0.56);
+    treatment.className = `treatment-animation treatment-${type}${isPlayerTwo ? " treatment-player-two" : " treatment-player-one"}`;
+    treatment.style.left = `${bounds.left + bounds.width / 2 + sideOffset}px`;
+    treatment.style.top = `${bounds.top + bounds.height * 0.12}px`;
     treatment.style.width = `${bounds.width * 0.72}px`;
     treatment.style.height = `${bounds.height * 0.72}px`;
+    treatment.style.setProperty("--treatment-flip", isPlayerTwo ? "-1" : "1");
     treatment.style.setProperty("--treatment-image", `url("assets/${asset}.png")`);
     const effect = document.createElement("span");
     effect.className = "treatment-effect";
@@ -185,17 +188,17 @@
 
     const keyframes = type === "weed-killer"
       ? [
-        { opacity: 0, transform: "translate(-50%, -50%) scale(0.78) rotate(0deg)" },
-        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)", offset: 0.14 },
-        { opacity: 1, transform: "translate(-50%, -50%) scale(1.04) rotate(-4deg)", offset: 0.7 },
-        { opacity: 0, transform: "translate(-50%, -50%) scale(0.9) rotate(0deg)", offset: 1 },
+        { opacity: 0, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(0.78) rotate(0deg)" },
+        { opacity: 1, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(1) rotate(0deg)", offset: 0.14 },
+        { opacity: 1, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(1.04) rotate(-4deg)", offset: 0.7 },
+        { opacity: 0, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(0.9) rotate(0deg)", offset: 1 },
       ]
       : [
-        { opacity: 0, transform: "translate(-50%, -50%) scale(0.78) rotate(0deg)" },
-        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)", offset: 0.14 },
-        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(-48deg)", offset: 0.46 },
-        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(-48deg)", offset: 0.7 },
-        { opacity: 0, transform: "translate(-50%, -50%) scale(0.9) rotate(0deg)", offset: 1 },
+        { opacity: 0, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(0.78) rotate(0deg)" },
+        { opacity: 1, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(1) rotate(0deg)", offset: 0.14 },
+        { opacity: 1, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(1) rotate(-48deg)", offset: 0.46 },
+        { opacity: 1, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(1) rotate(-48deg)", offset: 0.7 },
+        { opacity: 0, transform: "translate(-50%, -50%) scaleX(var(--treatment-flip)) scale(0.9) rotate(0deg)", offset: 1 },
       ];
 
     return treatment.animate(keyframes, {

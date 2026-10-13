@@ -613,6 +613,7 @@ async function useTool(plot) {
     : null;
   if (selectedCrop) {
     if (!canPlantSeed(plot, selectedCrop)) return;
+    renderTools();
     plantCrop(plot, selectedCrop);
     selectedTool = null;
   } else if (selectedTool === "water") {
