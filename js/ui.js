@@ -179,7 +179,7 @@
     treatment.style.top = `${bounds.top + bounds.height * 0.12}px`;
     treatment.style.width = `${bounds.width * 0.72}px`;
     treatment.style.height = `${bounds.height * 0.72}px`;
-    treatment.style.setProperty("--treatment-flip", isPlayerTwo ? "-1" : "1");
+    treatment.style.setProperty("--treatment-flip", isPlayerTwo ? "1" : "-1");
     treatment.style.setProperty("--treatment-image", `url("assets/${asset}.png")`);
     const effect = document.createElement("span");
     effect.className = "treatment-effect";
