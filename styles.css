@@ -511,6 +511,64 @@ body {
   pointer-events: none;
 }
 
+.treatment-animation {
+  position: fixed;
+  z-index: 21;
+  pointer-events: none;
+  background: var(--treatment-image) center / contain no-repeat;
+  filter: drop-shadow(0 4px 2px rgb(44 55 27 / 42%));
+  transform-origin: 50% 72%;
+  will-change: transform, opacity;
+}
+
+.treatment-effect {
+  position: absolute;
+  pointer-events: none;
+}
+
+.treatment-water .treatment-effect,
+.treatment-fertiliser .treatment-effect {
+  left: 20%;
+  bottom: 2%;
+  width: 9px;
+  height: 42px;
+  border-radius: 50%;
+  background: #39b8f4;
+  box-shadow: 10px 13px 0 -2px #79d8ff, 20px 5px 0 -3px #1897d2;
+  opacity: 0;
+  transform: rotate(28deg) scaleY(0.35);
+  animation: treatment-pour 820ms 330ms ease-in forwards;
+}
+
+.treatment-fertiliser .treatment-effect {
+  background: #9a5a25;
+  box-shadow: 10px 13px 0 -2px #c27b36, 20px 5px 0 -3px #70401d;
+}
+
+.treatment-weed-killer .treatment-effect {
+  left: 8%;
+  top: 38%;
+  width: 84%;
+  height: 42%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(88 211 78 / 80%) 0 10%, transparent 12%) 0 0 / 15px 15px;
+  opacity: 0;
+  transform: translateX(-12%) scale(0.5);
+  animation: treatment-mist 950ms 260ms ease-out forwards;
+}
+
+@keyframes treatment-pour {
+  0% { opacity: 0; transform: rotate(28deg) scaleY(0.35); }
+  18%, 75% { opacity: 0.95; transform: rotate(28deg) scaleY(1); }
+  100% { opacity: 0; transform: rotate(28deg) translateY(15px) scaleY(0.55); }
+}
+
+@keyframes treatment-mist {
+  0% { opacity: 0; transform: translateX(-12%) scale(0.5); }
+  25%, 68% { opacity: 0.9; transform: translateX(5%) scale(1); }
+  100% { opacity: 0; transform: translateX(18%) scale(1.25); }
+}
+
 .transaction-flyer {
   display: block;
   background-position: center;

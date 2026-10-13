@@ -14,6 +14,7 @@ const {
   animateCardLayout,
   animateCropAppearance,
   animateFlyingIcon,
+  animateTreatment,
   captureCardPositions,
   cropSlug,
   isActionLocked,
@@ -232,7 +233,7 @@ function createOrder() {
 
   const fullReward = items.reduce((total, item) => {
     const crop = crops.find((candidate) => candidate.name === item.crop);
-    return total + item.amount * (crop.waterNeeded * 2 + crop.rarity * 3);
+    return total + item.amount * crop.marketValue;
   }, 0);
   const reward = Math.max(1, Math.round(fullReward * 0.25));
   return { id: nextOrderId++, items, reward, filled: false };
@@ -392,6 +393,23 @@ function pickRandomCrop() {
   return crops[0];
 }
 
+function getPlotOwner(plot) {
+  if (plot.classList.contains("player-one-plot")) return 1;
+  if (plot.classList.contains("player-two-plot")) return 2;
+  return null;
+}
+
+function canInteractWithPlot(plot, action) {
+  return action === "weed-killer" || getPlotOwner(plot) === null || getPlotOwner(plot) === currentPlayer;
+}
+
+function canPlantSeed(plot, crop) {
+  return !plot.dataset.crop
+    && !plot.querySelector(".spawn-timer")
+    && canInteractWithPlot(plot, "plant")
+    && Boolean(crop);
+}
+
 function plantCrop(plot, crop) {
   const cropIcon = document.createElement("span");
   cropIcon.className = "crop";
@@ -507,12 +525,17 @@ function canUseTool(plot, tool) {
 
 function updateEligiblePlots() {
   grid.querySelectorAll(".plot").forEach((plot) => {
-    const hasUse = selectedTool === "weed-killer" || selectedTool === "fertiliser"
+    const selectedCrop = selectedTool?.startsWith("seed:")
+      ? crops.find((crop) => crop.name === selectedTool.slice(5))
+      : null;
+    const hasUse = selectedCrop
+      ? canPlantSeed(plot, selectedCrop)
+      : selectedTool === "weed-killer" || selectedTool === "fertiliser"
       ? true
       : turnActions[selectedTool] > 0;
     plot.classList.toggle(
       "can-use-tool",
-      Boolean(selectedTool && hasUse && canUseTool(plot, selectedTool)),
+      Boolean(selectedTool && hasUse && (selectedCrop ? true : canUseTool(plot, selectedTool))),
     );
   });
 }
@@ -572,11 +595,15 @@ async function removeCrop(plot) {
 }
 
 async function useTool(plot) {
+  if (plot.classList.contains("is-treating")) return;
+  plot.classList.add("is-treating");
+  try {
   if (selectedTool === "water") {
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
     plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
     turnActions.water -= 1;
     updateCropProgress(plot);
+    await animateTreatment(plot, "water");
   } else if (selectedTool === "cut") {
     const harvestedCrop = plot.dataset.crop;
     if (plot.classList.contains("is-harvesting")) return;
@@ -598,15 +625,20 @@ async function useTool(plot) {
   } else if (selectedTool === "weed-killer") {
     selectedTool = null;
     renderTools();
+    await animateTreatment(plot, "weed-killer");
     await removeCrop(plot);
   } else if (selectedTool === "fertiliser") {
     plot.dataset.water = String(Number(plot.dataset.water) + 3);
     selectedTool = null;
     updateCropProgress(plot);
+    await animateTreatment(plot, "fertiliser");
   }
 
   if (selectedTool && turnActions[selectedTool] === 0) selectedTool = null;
   renderTools();
+  } finally {
+    plot.classList.remove("is-treating");
+  }
 }
 
 toolButtons.forEach((button) => {

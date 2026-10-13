@@ -166,11 +166,51 @@
     });
   }
 
+  function animateTreatment(plot, type) {
+    const crop = plot?.querySelector(".crop");
+    if (!crop) return Promise.resolve();
+    const bounds = crop.getBoundingClientRect();
+    const treatment = document.createElement("span");
+    const asset = type === "water" ? "watering_can" : `${type.replace("-", "_")}_icon`;
+    treatment.className = `treatment-animation treatment-${type}`;
+    treatment.style.left = `${bounds.left + bounds.width / 2}px`;
+    treatment.style.top = `${bounds.top + bounds.height * 0.46}px`;
+    treatment.style.width = `${bounds.width * 0.72}px`;
+    treatment.style.height = `${bounds.height * 0.72}px`;
+    treatment.style.setProperty("--treatment-image", `url("assets/${asset}.png")`);
+    const effect = document.createElement("span");
+    effect.className = "treatment-effect";
+    treatment.append(effect);
+    document.body.append(treatment);
+
+    const keyframes = type === "weed-killer"
+      ? [
+        { opacity: 0, transform: "translate(-50%, -50%) scale(0.78) rotate(0deg)" },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)", offset: 0.14 },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1.04) rotate(-4deg)", offset: 0.7 },
+        { opacity: 0, transform: "translate(-50%, -50%) scale(0.9) rotate(0deg)", offset: 1 },
+      ]
+      : [
+        { opacity: 0, transform: "translate(-50%, -50%) scale(0.78) rotate(0deg)" },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)", offset: 0.14 },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(-48deg)", offset: 0.46 },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(-48deg)", offset: 0.7 },
+        { opacity: 0, transform: "translate(-50%, -50%) scale(0.9) rotate(0deg)", offset: 1 },
+      ];
+
+    return treatment.animate(keyframes, {
+      duration: 1500,
+      easing: "cubic-bezier(0.22, 0.8, 0.36, 1)",
+      fill: "forwards",
+    }).finished.finally(() => treatment.remove());
+  }
+
   window.FarmGameUi = {
     activateOnPress,
     animateCardLayout,
     animateCropAppearance,
     animateFlyingIcon,
+    animateTreatment,
     captureCardPositions,
     cropSlug,
     isActionLocked: () => actionLocked,
