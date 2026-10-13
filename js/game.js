@@ -448,13 +448,13 @@ function queueNextCropSpawn() {
   spawnTimerPlot = availablePlots[Math.floor(Math.random() * availablePlots.length)];
   const timer = document.createElement("span");
   timer.className = "spawn-timer";
-  timer.textContent = "3";
-  timer.dataset.turns = "3";
+  timer.textContent = "2";
+  timer.dataset.turns = "2";
   timer.setAttribute("aria-hidden", "true");
   spawnTimerPlot.append(timer);
   spawnTimerPlot.setAttribute(
     "aria-label",
-    `${spawnTimerPlot.getAttribute("aria-label")}, crop arriving in 3 turns`,
+    `${spawnTimerPlot.getAttribute("aria-label")}, crop arriving in 2 turns`,
   );
 }
 
