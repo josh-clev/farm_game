@@ -615,6 +615,7 @@ async function useTool(plot) {
     plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
     turnActions.water -= 1;
     updateCropProgress(plot);
+    renderTools();
     await animateTreatment(plot, "water");
   } else if (selectedTool === "cut") {
     const harvestedCrop = plot.dataset.crop;
