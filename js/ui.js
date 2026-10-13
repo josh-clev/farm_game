@@ -104,12 +104,17 @@
     });
   }
 
-  async function slideCardAway(card, container, selector, duration = 360) {
+  async function slideCardAway(card, container, selector, duration = 360, direction = "right") {
     const previousPositions = captureCardPositions(container, selector);
+    const exitTransform = direction === "up"
+      ? "translateY(-70px) scale(0.82)"
+      : direction === "down"
+      ? "translateY(70px) scale(0.82)"
+      : "translateX(70px) scale(0.82)";
     await card.animate(
       [
         { opacity: 1, transform: "translateX(0) scale(1)" },
-        { opacity: 0, transform: "translateX(70px) scale(0.82)" },
+        { opacity: 0, transform: exitTransform },
       ],
       { duration, easing: "cubic-bezier(0.55, 0, 1, 0.45)", fill: "forwards" },
     ).finished;

@@ -7,7 +7,9 @@ const waterIcons = document.querySelector(".water-icons");
 const cutIcons = document.querySelector(".cut-icons");
 const actionDock = document.querySelector(".action-dock");
 const orderList = document.querySelector(".order-list");
-const shopCards = [...document.querySelectorAll(".shop-card")];
+const allShopCards = [...document.querySelectorAll(".shop-card")];
+const shopCards = allShopCards.slice(0, 3);
+allShopCards.slice(3).forEach((card) => { card.hidden = true; });
 const { shopItems, crops } = window.FarmGameData;
 const {
   activateOnPress,
@@ -146,6 +148,8 @@ async function updateResourcePool(player, cropName) {
   const previousPoolBounds = pool.getBoundingClientRect();
   const shouldShow = playerResources[player][cropName] > 0;
 
+  item.getAnimations().forEach((animation) => animation.cancel());
+
   if (!shouldShow && !item.hidden) {
     await item.animate(
       [
@@ -177,13 +181,14 @@ async function updateResourcePool(player, cropName) {
   );
 
   if (shouldShow) {
-    item.animate(
+    await item.animate(
       [
         { opacity: 0, transform: "translateY(10px) scale(0.6)" },
         { opacity: 1, transform: "translateY(0) scale(1)" },
       ],
-      { duration: 260, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.25)" },
-    );
+      { duration: 260, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.25)", fill: "both" },
+    ).finished;
+    item.getAnimations().forEach((animation) => animation.cancel());
   }
 }
 
@@ -319,7 +324,7 @@ async function fillOrder(orderIndex) {
   updateCoinDisplay(currentPlayer);
   order.filled = true;
   renderShop();
-  await slideCardAway(card, orderList, ".order-card", 720);
+  await slideCardAway(card, orderList, ".order-card", 720, "down");
 }
 
 function setDesktopPreviewRatio() {
@@ -681,7 +686,7 @@ shopCards.forEach((card) => {
       } else {
         selectedTool = item.tool;
       }
-      await slideCardAway(card, card.parentElement, ".shop-card");
+      await slideCardAway(card, card.parentElement, ".shop-card", 360, "up");
       renderTools();
     });
   });
