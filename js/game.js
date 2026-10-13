@@ -512,6 +512,7 @@ function updateCropProgress(plot) {
 
 function canUseTool(plot, tool) {
   if (!plot.dataset.crop) return false;
+  if (!canInteractWithPlot(plot, tool)) return false;
 
   if (tool === "weed-killer" || tool === "fertiliser") return true;
 
@@ -598,7 +599,14 @@ async function useTool(plot) {
   if (plot.classList.contains("is-treating")) return;
   plot.classList.add("is-treating");
   try {
-  if (selectedTool === "water") {
+  const selectedCrop = selectedTool?.startsWith("seed:")
+    ? crops.find((crop) => crop.name === selectedTool.slice(5))
+    : null;
+  if (selectedCrop) {
+    if (!canPlantSeed(plot, selectedCrop)) return;
+    plantCrop(plot, selectedCrop);
+    selectedTool = null;
+  } else if (selectedTool === "water") {
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
     plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
     turnActions.water -= 1;
@@ -663,6 +671,8 @@ shopCards.forEach((card) => {
       if (item.upgrade) {
         playerUpgrades[currentPlayer][item.upgrade] += 1;
         turnActions[item.upgrade] += 1;
+      } else if (item.seedCrop) {
+        selectedTool = `seed:${item.seedCrop}`;
       } else {
         selectedTool = item.tool;
       }
