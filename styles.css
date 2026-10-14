@@ -1033,3 +1033,198 @@ body {
     box-shadow: none;
   }
 }
+
+/* Keep the main play areas in one full-height stack on every screen. */
+.game {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+
+.board-layout {
+  grid-template-columns: minmax(76px, 0.55fr) minmax(0, 2.5fr) minmax(76px, 0.55fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.center-stack {
+  grid-template-rows: max-content minmax(0, 1fr) max-content;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.shop-board,
+.order-board {
+  align-self: center;
+}
+
+.shop-list,
+.order-list {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-inline: auto;
+}
+
+.farm-grid {
+  width: auto;
+  height: 100%;
+  max-height: 100%;
+}
+
+.action-dock,
+.action-dock.player-one-dock,
+.action-dock.player-two-dock {
+  position: absolute;
+  z-index: 9;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-self: auto;
+  margin: 0;
+}
+
+.action-dock.player-one-dock {
+  left: max(10px, env(safe-area-inset-left));
+  right: auto;
+}
+
+.action-dock.player-two-dock {
+  right: max(10px, env(safe-area-inset-right));
+  left: auto;
+}
+
+.tool-tray {
+  flex-direction: column;
+}
+
+.tool-button {
+  min-width: clamp(78px, 10vw, 125px);
+}
+
+.next-turn {
+  min-width: clamp(100px, 12vw, 160px);
+  font-size: clamp(0.82rem, 2.2vw, 1.35rem);
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  html,
+  body {
+    overflow: hidden;
+  }
+
+  .game {
+    display: grid;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .board-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: max-content minmax(0, 1fr);
+    gap: 6px 52px;
+    height: 100%;
+    max-height: none;
+  }
+
+  .resource-pool {
+    margin: 0;
+    padding: 5px;
+  }
+
+  .center-stack {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .farm-grid {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+  }
+
+  .shop-board,
+  .order-board {
+    padding-inline: 0;
+  }
+
+  .shop-list {
+    gap: 4px;
+    width: 100%;
+  }
+
+  .shop-card {
+    flex: 0 1 22%;
+    min-width: 0;
+    min-height: 32px;
+    grid-template-columns: minmax(16px, 28px) minmax(0, 1fr);
+    padding: 2px;
+    border-width: 2px;
+  }
+
+  .order-list {
+    gap: 4px;
+    width: min(100%, calc(100% - clamp(200px, 56vw, 240px)));
+  }
+
+  .order-card {
+    flex: 0 1 100%;
+    min-height: clamp(34px, 6vh, 52px);
+    grid-template-columns: 1fr;
+    gap: 2px;
+    padding: 3px;
+    border-width: 2px;
+  }
+
+  .order-items {
+    gap: 2px 5px;
+  }
+
+  .order-item,
+  .order-reward {
+    font-size: clamp(0.62rem, 2.8vw, 0.9rem);
+    white-space: nowrap;
+  }
+
+  .turn-badge {
+    top: max(8px, env(safe-area-inset-top));
+    right: auto;
+    left: 50%;
+    width: 40px;
+    transform: translateX(-50%);
+  }
+
+  .tool-button {
+    min-width: 76px;
+    min-height: 40px;
+    padding: 3px;
+    border-width: 2px;
+  }
+
+  .tool-icons {
+    min-height: 20px;
+  }
+
+  .tool-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .next-turn {
+    min-width: 88px;
+    min-height: 40px;
+    padding: 5px 4px;
+    font-size: 0.78rem;
+  }
+}
