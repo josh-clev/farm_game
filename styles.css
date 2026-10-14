@@ -92,6 +92,23 @@ body {
   display: none;
 }
 
+.resource-item.is-discard-option {
+  cursor: pointer;
+  border-radius: 10px;
+  outline: 3px solid #e34d2f;
+  background: #fff1a6;
+  animation: discard-pulse 900ms ease-in-out infinite alternate;
+}
+
+.resource-item.is-discard-option:focus-visible {
+  outline-color: #1d5fd1;
+}
+
+@keyframes discard-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.12); }
+}
+
 .resource-icon {
   flex: 0 0 auto;
   width: clamp(20px, 5vw, 36px);

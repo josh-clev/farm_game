@@ -54,6 +54,8 @@ const playerCoins = { 1: 10, 2: 10 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
+const MAX_RESOURCES = 7;
+let pendingDiscardCount = 0;
 
 function updateCoinDisplay(player) {
   const coinTotal = document.querySelector(`[data-player-coins="${player}"]`);
@@ -113,6 +115,10 @@ function buildResourcePools() {
       const item = document.createElement("div");
       item.className = "resource-item";
       item.hidden = true;
+      item.dataset.player = String(player);
+      item.dataset.crop = crop.name;
+      item.setAttribute("role", "button");
+      item.tabIndex = -1;
       item.setAttribute("aria-label", `${crop.name}: 0`);
 
       const icon = document.createElement("span");
@@ -192,6 +198,46 @@ async function updateResourcePool(player, cropName) {
   }
 }
 
+function totalResources(player) {
+  return Object.values(playerResources[player]).reduce((total, amount) => total + amount, 0);
+}
+
+function updateDiscardSelection() {
+  document.querySelectorAll(".resource-item[data-crop]").forEach((item) => {
+    const isCurrentPlayer = Number(item.dataset.player) === currentPlayer;
+    const hasResource = playerResources[currentPlayer][item.dataset.crop] > 0;
+    item.classList.toggle("is-discard-option", pendingDiscardCount > 0 && isCurrentPlayer && hasResource);
+    item.tabIndex = pendingDiscardCount > 0 && isCurrentPlayer && hasResource ? 0 : -1;
+    item.setAttribute("aria-disabled", String(!(pendingDiscardCount > 0 && isCurrentPlayer && hasResource)));
+  });
+}
+
+function beginDiscardSelection() {
+  pendingDiscardCount = Math.max(0, totalResources(currentPlayer) - MAX_RESOURCES);
+  if (pendingDiscardCount === 0) return;
+  turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
+  turnAnnouncement.classList.add("is-discarding");
+  updateDiscardSelection();
+}
+
+async function discardResource(item) {
+  if (pendingDiscardCount === 0 || Number(item.dataset.player) !== currentPlayer) return;
+  const cropName = item.dataset.crop;
+  if (playerResources[currentPlayer][cropName] === 0) return;
+  playerResources[currentPlayer][cropName] -= 1;
+  pendingDiscardCount -= 1;
+  await updateResourcePool(currentPlayer, cropName);
+  if (pendingDiscardCount === 0) {
+    turnAnnouncement.classList.remove("is-discarding");
+    announceTurn();
+    updateDiscardSelection();
+  } else {
+    turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
+    updateDiscardSelection();
+  }
+  renderOrders();
+}
+
 async function animateHarvest(plot, cropName) {
   const cropElement = plot.querySelector(".crop");
   if (!cropElement) return;
@@ -251,8 +297,8 @@ function createOrder() {
     return total + item.amount * crop.marketValue;
   }, 0);
   const resourceCount = items.reduce((total, item) => total + item.amount, 0);
-  const rewardBoost = resourceCount >= 5 ? 5 : resourceCount >= 4 ? 3 : resourceCount >= 3 ? 2 : 0;
-  const reward = Math.ceil(fullReward + rewardBoost);
+  const rewardRate = resourceCount >= 5 ? 0.25 : resourceCount >= 4 ? 0.15 : resourceCount >= 3 ? 0.10 : 0;
+  const reward = Math.ceil(fullReward * (1 + rewardRate));
   return { id: nextOrderId++, items, reward, filled: false };
 }
 
@@ -576,12 +622,12 @@ function renderTools() {
     const isSelected = selectedTool === tool;
     button.classList.toggle("is-selected-tool", isSelected);
     button.setAttribute("aria-pressed", String(isSelected));
-    button.disabled = turnActions[tool] === 0;
+    button.disabled = turnActions[tool] === 0 || pendingDiscardCount > 0;
     button.setAttribute("aria-label", `${tool === "water" ? "Water" : "Harvest"}: ${turnActions[tool]} remaining`);
   });
 
   const mustUseWater = turnActions.water > 0;
-  nextTurnButton.disabled = mustUseWater;
+  nextTurnButton.disabled = mustUseWater || pendingDiscardCount > 0;
   nextTurnButton.setAttribute(
     "aria-label",
     mustUseWater ? `Next Turn: use all ${turnActions.water} water actions first` : "Next Turn",
@@ -615,7 +661,7 @@ async function removeCrop(plot) {
 }
 
 async function useTool(plot) {
-  if (plot.classList.contains("is-treating")) return;
+  if (plot.classList.contains("is-treating") || pendingDiscardCount > 0) return;
   plot.classList.add("is-treating");
   try {
   const selectedCrop = selectedTool?.startsWith("seed:")
@@ -652,6 +698,8 @@ async function useTool(plot) {
     plot.classList.remove("fully-grown");
     playerResources[currentPlayer][harvestedCrop] += 1;
     await updateResourcePool(currentPlayer, harvestedCrop);
+    beginDiscardSelection();
+    renderTools();
     renderOrders();
     plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
     plot.classList.remove("is-harvesting");
@@ -676,6 +724,7 @@ async function useTool(plot) {
 
 toolButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (pendingDiscardCount > 0) return;
     const tool = button.dataset.tool;
     selectedTool = selectedTool === tool ? null : tool;
     renderTools();
@@ -723,6 +772,13 @@ orderList.addEventListener("keydown", (event) => {
   handleOrderPress(event);
 });
 
+document.querySelectorAll(".resource-list").forEach((resourceList) => {
+  resourceList.addEventListener("click", (event) => {
+    const item = event.target.closest(".resource-item[data-crop]");
+    if (item) discardResource(item);
+  });
+});
+
 function announceTurn() {
   const playerName = `Player ${currentPlayer}`;
   turnAnnouncement.textContent = `${playerName}'s Turn!`;
@@ -740,7 +796,7 @@ function announceTurn() {
 }
 
 nextTurnButton.addEventListener("click", () => {
-  if (isActionLocked() || turnActions.water > 0) return;
+  if (isActionLocked() || turnActions.water > 0 || pendingDiscardCount > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
