@@ -825,9 +825,182 @@ body {
   }
 }
 
+@media (max-width: 760px), (max-height: 520px) {
+  .board-layout {
+    grid-template-columns: minmax(74px, 0.55fr) minmax(0, 2.5fr) minmax(74px, 0.55fr);
+  }
+
+  .action-dock {
+    flex-direction: row;
+    align-items: end;
+  }
+
+  .tool-tray {
+    flex-direction: row;
+  }
+
+  .tool-button {
+    min-width: 64px;
+    min-height: 44px;
+    border-width: 3px;
+  }
+
+  .tool-icons {
+    min-height: 24px;
+  }
+
+  .next-turn {
+    min-width: 94px;
+    min-height: 44px;
+    padding: 7px;
+  }
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  html,
+  body {
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .game {
+    display: block;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: max(68px, calc(env(safe-area-inset-top) + 56px))
+      max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .board-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 8px;
+    height: auto;
+    max-height: none;
+  }
+
+  .resource-pool {
+    margin: 0;
+  }
+
+  .center-stack {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    height: auto;
+    gap: 8px;
+  }
+
+  .farm-grid {
+    width: min(100%, 68vw, 48vh);
+    height: auto;
+  }
+
+  .shop-list,
+  .order-list {
+    flex-wrap: wrap;
+  }
+
+  .shop-card {
+    flex-basis: min(22%, 110px);
+    grid-template-columns: minmax(20px, 34px) minmax(0, 1fr);
+    padding: 3px;
+    border-width: 2px;
+  }
+
+  .order-card {
+    flex-basis: min(30%, 112px);
+    padding: 4px;
+    border-width: 2px;
+  }
+
+  .action-dock,
+  .action-dock.player-one-dock,
+  .action-dock.player-two-dock {
+    position: static;
+    justify-content: center;
+    margin: 12px auto 4px;
+  }
+
+  .turn-badge {
+    top: max(8px, env(safe-area-inset-top));
+    width: 46px;
+  }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  .resource-pool {
+    padding: 6px 4px;
+    border-width: 2px;
+  }
+
+  .resource-item {
+    gap: 2px;
+  }
+
+  .resource-icon,
+  .resource-icon.coin-icon {
+    width: 18px;
+  }
+
+  .resource-count {
+    font-size: 0.72rem;
+  }
+
+  .shop-card {
+    grid-template-columns: 20px minmax(0, 1fr);
+    font-size: 0.5rem;
+  }
+}
+
+@media (max-height: 520px) {
+  html,
+  body {
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .game {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    aspect-ratio: auto;
+    padding-top: max(52px, calc(env(safe-area-inset-top) + 44px));
+  }
+
+  .board-layout {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .center-stack {
+    height: auto;
+  }
+
+  .farm-grid {
+    width: min(100%, 52vh);
+    height: auto;
+  }
+
+  .action-dock,
+  .action-dock.player-one-dock,
+  .action-dock.player-two-dock {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+    margin: 12px auto 4px;
+  }
+}
+
 @media (max-height: 520px) {
   .game {
-    padding-top: 8px;
+    padding-top: max(52px, calc(env(safe-area-inset-top) + 44px));
     padding-bottom: 8px;
   }
 
@@ -864,5 +1037,18 @@ body {
     border: 8px solid #17251a;
     border-radius: 28px;
     box-shadow: 0 18px 60px rgb(0 0 0 / 48%);
+  }
+}
+
+@media (max-width: 600px), (max-height: 520px) {
+  .game {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
