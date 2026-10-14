@@ -492,7 +492,7 @@ body {
   position: absolute;
   inset: 0;
   width: calc(var(--water-progress) * 100%);
-  border-radius: inherit;
+  border-radius: 999px 0 0 999px;
   background: linear-gradient(90deg, #1699ef, #6ed4ff);
   content: "";
   transition: width 220ms ease-out;
@@ -504,8 +504,8 @@ body {
   bottom: 0;
   left: calc(var(--water-progress) * 100%);
   width: calc(var(--water-remaining) * 100%);
-  border-radius: inherit;
-  background: rgb(100 203 255 / 58%);
+  border-radius: 0 999px 999px 0;
+  background: rgb(130 220 255 / 34%);
   box-shadow: inset 1px 0 rgb(255 255 255 / 35%);
   transition: left 220ms ease-out, width 220ms ease-out;
 }

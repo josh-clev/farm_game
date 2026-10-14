@@ -588,7 +588,8 @@ function updateCropProgress(plot) {
   const waterNeeded = Number(plot.dataset.waterNeeded);
   const currentProgress = Math.min(1, water / waterNeeded);
   const remainingCapacity = Math.max(0, waterNeeded - water);
-  const remainingThisTurn = Math.min(turnActions.water, remainingCapacity);
+  const turnWatered = Number(plot.dataset.turnWatered || 0);
+  const remainingThisTurn = Math.max(0, Math.min(2 - turnWatered, turnActions.water, remainingCapacity));
   progress.style.setProperty("--water-progress", String(currentProgress));
   progress.style.setProperty("--water-remaining", String(remainingThisTurn / waterNeeded));
   progress.querySelector(".crop-progress-label").textContent = `${water}/${waterNeeded}`;
