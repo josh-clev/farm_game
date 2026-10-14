@@ -29,8 +29,8 @@ let currentPlayer = 1;
 let selectedTool = null;
 let turnActions = { water: 3, cut: 1 };
 const playerUpgrades = {
-  1: { water: 0, cut: 0 },
-  2: { water: 0, cut: 0 },
+  1: { water: 0, cut: 0, storage: 0 },
+  2: { water: 0, cut: 0, storage: 0 },
 };
 
 const shopItemKeys = Object.keys(shopItems);
@@ -54,7 +54,7 @@ const playerCoins = { 1: 10, 2: 10 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
-const MAX_RESOURCES = 7;
+const BASE_MAX_RESOURCES = 7;
 let pendingDiscardCount = 0;
 
 function updateCoinDisplay(player) {
@@ -104,6 +104,10 @@ function buildResourcePools() {
   document.querySelectorAll(".resource-pool").forEach((pool, poolIndex) => {
     const player = poolIndex + 1;
     const resourceList = pool.querySelector(".resource-list");
+    const capacity = document.createElement("div");
+    capacity.className = "resource-capacity";
+    capacity.dataset.player = String(player);
+    resourceList.before(capacity);
 
     const coinItem = document.createElement("div");
     coinItem.className = "resource-item coin-item";
@@ -140,7 +144,19 @@ function buildResourcePools() {
         icon.style.backgroundImage = `url("${source}")`;
       });
     });
+    updateResourceCapacity(player);
   });
+}
+
+function maxResources(player) {
+  return BASE_MAX_RESOURCES + playerUpgrades[player].storage;
+}
+
+function updateResourceCapacity(player) {
+  const capacity = document.querySelector(`.resource-capacity[data-player="${player}"]`);
+  if (!capacity) return;
+  capacity.textContent = `${totalResources(player)} / ${maxResources(player)}`;
+  capacity.setAttribute("aria-label", `Player ${player} resources: ${totalResources(player)} of ${maxResources(player)}`);
 }
 
 async function updateResourcePool(player, cropName) {
@@ -167,6 +183,7 @@ async function updateResourcePool(player, cropName) {
   }
 
   count.textContent = String(playerResources[player][cropName]);
+  updateResourceCapacity(player);
   item.hidden = !shouldShow;
   item.setAttribute(
     "aria-label",
@@ -213,7 +230,7 @@ function updateDiscardSelection() {
 }
 
 function beginDiscardSelection() {
-  pendingDiscardCount = Math.max(0, totalResources(currentPlayer) - MAX_RESOURCES);
+  pendingDiscardCount = Math.max(0, totalResources(currentPlayer) - maxResources(currentPlayer));
   if (pendingDiscardCount === 0) return;
   turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
   turnAnnouncement.classList.add("is-discarding");
@@ -744,7 +761,8 @@ shopCards.forEach((card) => {
       updateCoinDisplay(currentPlayer);
       if (item.upgrade) {
         playerUpgrades[currentPlayer][item.upgrade] += 1;
-        turnActions[item.upgrade] += 1;
+        if (item.upgrade in turnActions) turnActions[item.upgrade] += 1;
+        if (item.upgrade === "storage") updateResourceCapacity(currentPlayer);
       } else if (item.seedCrop) {
         selectedTool = `seed:${item.seedCrop}`;
       } else {

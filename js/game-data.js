@@ -25,6 +25,7 @@
     "plot-upgrade": { name: "Plot Upgrade", price: 25, asset: "plot_upgrade", tool: "plot-upgrade" },
     "water-upgrade": { name: "Water Upgrade", price: 30, asset: "water_upgrade_icon", upgrade: "water" },
     "harvest-upgrade": { name: "Harvest Upgrade", price: 40, asset: "harvest_upgrade_icon", upgrade: "cut" },
+    "storage-upgrade": { name: "Storage Upgrade", price: 20, asset: "storage_upgrade", upgrade: "storage" },
     ...seedItems,
   };
 

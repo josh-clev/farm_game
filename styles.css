@@ -79,6 +79,14 @@ body {
   min-height: 42px;
 }
 
+.resource-capacity {
+  margin-bottom: 4px;
+  color: #563b20;
+  font-size: clamp(0.7rem, 2.7vw, 1rem);
+  font-weight: 1000;
+  text-align: center;
+}
+
 .resource-item {
   display: flex;
   align-items: center;
