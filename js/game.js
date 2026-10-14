@@ -685,7 +685,8 @@ async function removeCrop(plot) {
 }
 
 async function useTool(plot) {
-  if (plot.classList.contains("is-treating") || pendingDiscardCount > 0) return;
+  const canStackTreatment = selectedTool === "water";
+  if ((plot.classList.contains("is-treating") && !canStackTreatment) || pendingDiscardCount > 0) return;
   plot.classList.add("is-treating");
   try {
   const selectedCrop = selectedTool?.startsWith("seed:")
