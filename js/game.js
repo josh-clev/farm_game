@@ -7,13 +7,16 @@ const waterIcons = document.querySelector(".water-icons");
 const cutIcons = document.querySelector(".cut-icons");
 const actionDock = document.querySelector(".action-dock");
 const orderList = document.querySelector(".order-list");
-const shopCards = [...document.querySelectorAll(".shop-card")];
+const allShopCards = [...document.querySelectorAll(".shop-card")];
+const shopCards = allShopCards.slice(0, 3);
+allShopCards.slice(3).forEach((card) => { card.hidden = true; });
 const { shopItems, crops } = window.FarmGameData;
 const {
   activateOnPress,
   animateCardLayout,
   animateCropAppearance,
   animateFlyingIcon,
+  animateTreatment,
   captureCardPositions,
   cropSlug,
   isActionLocked,
@@ -26,24 +29,33 @@ let currentPlayer = 1;
 let selectedTool = null;
 let turnActions = { water: 3, cut: 1 };
 const playerUpgrades = {
-  1: { water: 0, cut: 0 },
-  2: { water: 0, cut: 0 },
+  1: { water: 0, cut: 0, storage: 0 },
+  2: { water: 0, cut: 0, storage: 0 },
 };
 
 const shopItemKeys = Object.keys(shopItems);
-const shopSlots = shopCards.map((card) => ({
-  itemKey: card.dataset.item,
-  purchased: false,
-}));
+function drawShopItem(excludedKeys = new Set()) {
+  const choices = shopItemKeys.filter((itemKey) => !excludedKeys.has(itemKey));
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+const initialShopKeys = new Set();
+const shopSlots = shopCards.map(() => {
+  const itemKey = drawShopItem(initialShopKeys);
+  initialShopKeys.add(itemKey);
+  return { itemKey, purchased: false };
+});
 
 const playerResources = {
   1: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
   2: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
 };
-const playerCoins = { 1: 0, 2: 0 };
+const playerCoins = { 1: 10, 2: 10 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
+const BASE_MAX_RESOURCES = 7;
+let pendingDiscardCount = 0;
 
 function updateCoinDisplay(player) {
   const coinTotal = document.querySelector(`[data-player-coins="${player}"]`);
@@ -57,6 +69,7 @@ function renderShop() {
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
     card.dataset.item = slot.itemKey;
+    card.dataset.layoutKey = String(slotIndex);
     if (card.dataset.renderedItem !== slot.itemKey) {
       card.innerHTML = `<span class="shop-icon" aria-hidden="true"></span><span class="shop-details"><span class="shop-price"><img class="coin-icon" src="assets/coin_icon.png" alt="">${item.price}</span></span>`;
       card.dataset.renderedItem = slot.itemKey;
@@ -67,8 +80,9 @@ function renderShop() {
     card.classList.toggle("is-disabled", unavailable);
     card.setAttribute("aria-disabled", String(unavailable));
     card.tabIndex = unavailable ? -1 : 0;
-    card.classList.toggle("is-selected-item", selectedTool === item.tool);
-    card.setAttribute("aria-pressed", String(selectedTool === item.tool));
+    const selectedItemTool = item.seedCrop ? `seed:${item.seedCrop}` : item.tool;
+    card.classList.toggle("is-selected-item", selectedTool === selectedItemTool);
+    card.setAttribute("aria-pressed", String(selectedTool === selectedItemTool));
     card.setAttribute(
       "aria-label",
       slot.purchased ? `${item.name}, sold out until next turn` : `${item.name}, costs ${item.price} coins`,
@@ -77,10 +91,11 @@ function renderShop() {
 }
 
 function replacePurchasedShopItems() {
+  const visibleKeys = new Set(shopSlots.filter((slot) => !slot.purchased).map((slot) => slot.itemKey));
   shopSlots.forEach((slot) => {
     if (!slot.purchased) return;
-    const choices = shopItemKeys.filter((itemKey) => itemKey !== slot.itemKey);
-    slot.itemKey = choices[Math.floor(Math.random() * choices.length)];
+    slot.itemKey = drawShopItem(new Set([slot.itemKey, ...visibleKeys]));
+    visibleKeys.add(slot.itemKey);
     slot.purchased = false;
   });
 }
@@ -89,17 +104,25 @@ function buildResourcePools() {
   document.querySelectorAll(".resource-pool").forEach((pool, poolIndex) => {
     const player = poolIndex + 1;
     const resourceList = pool.querySelector(".resource-list");
+    const capacity = document.createElement("div");
+    capacity.className = "resource-capacity";
+    capacity.dataset.player = String(player);
+    resourceList.before(capacity);
 
     const coinItem = document.createElement("div");
     coinItem.className = "resource-item coin-item";
-    coinItem.setAttribute("aria-label", `Player ${player} coins: 0`);
-    coinItem.innerHTML = `<span class="resource-icon coin-icon" aria-hidden="true"></span><strong class="resource-count" data-player-coins="${player}">0</strong>`;
+    coinItem.setAttribute("aria-label", `Player ${player} coins: ${playerCoins[player]}`);
+    coinItem.innerHTML = `<span class="resource-icon coin-icon" aria-hidden="true"></span><strong class="resource-count" data-player-coins="${player}">${playerCoins[player]}</strong>`;
     resourceList.append(coinItem);
 
     crops.forEach((crop) => {
       const item = document.createElement("div");
       item.className = "resource-item";
       item.hidden = true;
+      item.dataset.player = String(player);
+      item.dataset.crop = crop.name;
+      item.setAttribute("role", "button");
+      item.tabIndex = -1;
       item.setAttribute("aria-label", `${crop.name}: 0`);
 
       const icon = document.createElement("span");
@@ -121,7 +144,19 @@ function buildResourcePools() {
         icon.style.backgroundImage = `url("${source}")`;
       });
     });
+    updateResourceCapacity(player);
   });
+}
+
+function maxResources(player) {
+  return BASE_MAX_RESOURCES + playerUpgrades[player].storage;
+}
+
+function updateResourceCapacity(player) {
+  const capacity = document.querySelector(`.resource-capacity[data-player="${player}"]`);
+  if (!capacity) return;
+  capacity.textContent = `${totalResources(player)} / ${maxResources(player)}`;
+  capacity.setAttribute("aria-label", `Player ${player} resources: ${totalResources(player)} of ${maxResources(player)}`);
 }
 
 async function updateResourcePool(player, cropName) {
@@ -135,6 +170,8 @@ async function updateResourcePool(player, cropName) {
   const previousPoolBounds = pool.getBoundingClientRect();
   const shouldShow = playerResources[player][cropName] > 0;
 
+  item.getAnimations().forEach((animation) => animation.cancel());
+
   if (!shouldShow && !item.hidden) {
     await item.animate(
       [
@@ -146,6 +183,7 @@ async function updateResourcePool(player, cropName) {
   }
 
   count.textContent = String(playerResources[player][cropName]);
+  updateResourceCapacity(player);
   item.hidden = !shouldShow;
   item.setAttribute(
     "aria-label",
@@ -166,14 +204,55 @@ async function updateResourcePool(player, cropName) {
   );
 
   if (shouldShow) {
-    item.animate(
+    await item.animate(
       [
         { opacity: 0, transform: "translateY(10px) scale(0.6)" },
         { opacity: 1, transform: "translateY(0) scale(1)" },
       ],
-      { duration: 260, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.25)" },
-    );
+      { duration: 260, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.25)", fill: "both" },
+    ).finished;
+    item.getAnimations().forEach((animation) => animation.cancel());
   }
+}
+
+function totalResources(player) {
+  return Object.values(playerResources[player]).reduce((total, amount) => total + amount, 0);
+}
+
+function updateDiscardSelection() {
+  document.querySelectorAll(".resource-item[data-crop]").forEach((item) => {
+    const isCurrentPlayer = Number(item.dataset.player) === currentPlayer;
+    const hasResource = playerResources[currentPlayer][item.dataset.crop] > 0;
+    item.classList.toggle("is-discard-option", pendingDiscardCount > 0 && isCurrentPlayer && hasResource);
+    item.tabIndex = pendingDiscardCount > 0 && isCurrentPlayer && hasResource ? 0 : -1;
+    item.setAttribute("aria-disabled", String(!(pendingDiscardCount > 0 && isCurrentPlayer && hasResource)));
+  });
+}
+
+function beginDiscardSelection() {
+  pendingDiscardCount = Math.max(0, totalResources(currentPlayer) - maxResources(currentPlayer));
+  if (pendingDiscardCount === 0) return;
+  turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
+  turnAnnouncement.classList.add("is-discarding");
+  updateDiscardSelection();
+}
+
+async function discardResource(item) {
+  if (pendingDiscardCount === 0 || Number(item.dataset.player) !== currentPlayer) return;
+  const cropName = item.dataset.crop;
+  if (playerResources[currentPlayer][cropName] === 0) return;
+  playerResources[currentPlayer][cropName] -= 1;
+  pendingDiscardCount -= 1;
+  await updateResourcePool(currentPlayer, cropName);
+  if (pendingDiscardCount === 0) {
+    turnAnnouncement.classList.remove("is-discarding");
+    announceTurn();
+    updateDiscardSelection();
+  } else {
+    turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
+    updateDiscardSelection();
+  }
+  renderOrders();
 }
 
 async function animateHarvest(plot, cropName) {
@@ -232,9 +311,11 @@ function createOrder() {
 
   const fullReward = items.reduce((total, item) => {
     const crop = crops.find((candidate) => candidate.name === item.crop);
-    return total + item.amount * (crop.waterNeeded * 2 + crop.rarity * 3);
+    return total + item.amount * crop.marketValue;
   }, 0);
-  const reward = Math.max(1, Math.round(fullReward * 0.25));
+  const resourceCount = items.reduce((total, item) => total + item.amount, 0);
+  const rewardRate = resourceCount >= 5 ? 0.25 : resourceCount >= 4 ? 0.15 : resourceCount >= 3 ? 0.10 : 0;
+  const reward = Math.ceil(fullReward * (1 + rewardRate));
   return { id: nextOrderId++, items, reward, filled: false };
 }
 
@@ -308,7 +389,7 @@ async function fillOrder(orderIndex) {
   updateCoinDisplay(currentPlayer);
   order.filled = true;
   renderShop();
-  await slideCardAway(card, orderList, ".order-card", 720);
+  await slideCardAway(card, orderList, ".order-card", 720, "down");
 }
 
 function setDesktopPreviewRatio() {
@@ -318,12 +399,6 @@ function setDesktopPreviewRatio() {
 setDesktopPreviewRatio();
 window.addEventListener("resize", setDesktopPreviewRatio);
 buildResourcePools();
-shopCards.forEach((card) => {
-  const item = shopItems[card.dataset.item];
-  card.dataset.layoutKey = String(shopCards.indexOf(card));
-  card.innerHTML = `<span class="shop-icon" aria-hidden="true"></span><span class="shop-details"><span class="shop-price"><img class="coin-icon" src="assets/coin_icon.png" alt="">${item.price}</span></span>`;
-  loadGraphic(item.asset, (source) => card.querySelector(".shop-icon").style.backgroundImage = `url("${source}")`);
-});
 orders = Array.from({ length: 5 }, createOrder);
 renderOrders();
 
@@ -392,6 +467,29 @@ function pickRandomCrop() {
   return crops[0];
 }
 
+function getPlotOwner(plot) {
+  if (plot.classList.contains("player-one-plot")) return 1;
+  if (plot.classList.contains("player-two-plot")) return 2;
+  return null;
+}
+
+function canInteractWithPlot(plot, action) {
+  return action === "weed-killer" || getPlotOwner(plot) === null || getPlotOwner(plot) === currentPlayer;
+}
+
+function canPlantSeed(plot, crop) {
+  return !plot.dataset.crop
+    && !plot.querySelector(".spawn-timer")
+    && canInteractWithPlot(plot, "plant")
+    && Boolean(crop);
+}
+
+function canUpgradePlot(plot) {
+  return getPlotOwner(plot) === null
+    && !plot.dataset.crop
+    && !plot.querySelector(".spawn-timer");
+}
+
 function plantCrop(plot, crop) {
   const cropIcon = document.createElement("span");
   cropIcon.className = "crop";
@@ -405,6 +503,7 @@ function plantCrop(plot, crop) {
 
   plot.dataset.crop = crop.name;
   plot.dataset.water = "0";
+  plot.dataset.turnWatered = "0";
   plot.dataset.waterNeeded = String(crop.waterNeeded);
   plot.append(cropIcon);
   const progress = document.createElement("span");
@@ -425,13 +524,13 @@ function queueNextCropSpawn() {
   spawnTimerPlot = availablePlots[Math.floor(Math.random() * availablePlots.length)];
   const timer = document.createElement("span");
   timer.className = "spawn-timer";
-  timer.textContent = "3";
-  timer.dataset.turns = "3";
+  timer.textContent = "2";
+  timer.dataset.turns = "2";
   timer.setAttribute("aria-hidden", "true");
   spawnTimerPlot.append(timer);
   spawnTimerPlot.setAttribute(
     "aria-label",
-    `${spawnTimerPlot.getAttribute("aria-label")}, crop arriving in 3 turns`,
+    `${spawnTimerPlot.getAttribute("aria-label")}, crop arriving in 2 turns`,
   );
 }
 
@@ -493,22 +592,33 @@ function updateCropProgress(plot) {
 
 function canUseTool(plot, tool) {
   if (!plot.dataset.crop) return false;
+  if (!canInteractWithPlot(plot, tool)) return false;
 
   if (tool === "weed-killer" || tool === "fertiliser") return true;
 
   const water = Number(plot.dataset.water);
   const waterNeeded = Number(plot.dataset.waterNeeded);
-  return tool === "water" ? water < waterNeeded : water >= waterNeeded;
+  const turnWatered = Number(plot.dataset.turnWatered || 0);
+  return tool === "water"
+    ? water < waterNeeded && turnWatered < 2
+    : water >= waterNeeded;
 }
 
 function updateEligiblePlots() {
   grid.querySelectorAll(".plot").forEach((plot) => {
-    const hasUse = selectedTool === "weed-killer" || selectedTool === "fertiliser"
+    const selectedCrop = selectedTool?.startsWith("seed:")
+      ? crops.find((crop) => crop.name === selectedTool.slice(5))
+      : null;
+    const hasUse = selectedCrop
+      ? canPlantSeed(plot, selectedCrop)
+      : selectedTool === "plot-upgrade"
+      ? canUpgradePlot(plot)
+      : selectedTool === "weed-killer" || selectedTool === "fertiliser"
       ? true
       : turnActions[selectedTool] > 0;
     plot.classList.toggle(
       "can-use-tool",
-      Boolean(selectedTool && hasUse && canUseTool(plot, selectedTool)),
+      Boolean(selectedTool && hasUse && (selectedCrop ? true : canUseTool(plot, selectedTool))),
     );
   });
 }
@@ -529,9 +639,16 @@ function renderTools() {
     const isSelected = selectedTool === tool;
     button.classList.toggle("is-selected-tool", isSelected);
     button.setAttribute("aria-pressed", String(isSelected));
-    button.disabled = turnActions[tool] === 0;
+    button.disabled = turnActions[tool] === 0 || pendingDiscardCount > 0;
     button.setAttribute("aria-label", `${tool === "water" ? "Water" : "Harvest"}: ${turnActions[tool]} remaining`);
   });
+
+  const mustUseWater = turnActions.water > 0;
+  nextTurnButton.disabled = mustUseWater || pendingDiscardCount > 0;
+  nextTurnButton.setAttribute(
+    "aria-label",
+    mustUseWater ? `Next Turn: use all ${turnActions.water} water actions first` : "Next Turn",
+  );
 
   updateEligiblePlots();
   renderShop();
@@ -554,16 +671,35 @@ async function removeCrop(plot) {
   plot.querySelector(".crop-progress")?.remove();
   delete plot.dataset.crop;
   delete plot.dataset.water;
+  delete plot.dataset.turnWatered;
   delete plot.dataset.waterNeeded;
   plot.classList.remove("fully-grown");
   plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
 }
 
 async function useTool(plot) {
-  if (selectedTool === "water") {
+  if (plot.classList.contains("is-treating") || pendingDiscardCount > 0) return;
+  plot.classList.add("is-treating");
+  try {
+  const selectedCrop = selectedTool?.startsWith("seed:")
+    ? crops.find((crop) => crop.name === selectedTool.slice(5))
+    : null;
+  if (selectedCrop) {
+    if (!canPlantSeed(plot, selectedCrop)) return;
+    plantCrop(plot, selectedCrop);
+    selectedTool = null;
+  } else if (selectedTool === "plot-upgrade") {
+    if (!canUpgradePlot(plot)) return;
+    plot.classList.add(currentPlayer === 1 ? "player-one-plot" : "player-two-plot");
+    plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}, Player ${currentPlayer} territory`);
+    selectedTool = null;
+  } else if (selectedTool === "water") {
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
+    plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
     turnActions.water -= 1;
     updateCropProgress(plot);
+    renderTools();
+    await animateTreatment(plot, "water");
   } else if (selectedTool === "cut") {
     const harvestedCrop = plot.dataset.crop;
     if (plot.classList.contains("is-harvesting")) return;
@@ -579,25 +715,33 @@ async function useTool(plot) {
     plot.classList.remove("fully-grown");
     playerResources[currentPlayer][harvestedCrop] += 1;
     await updateResourcePool(currentPlayer, harvestedCrop);
+    beginDiscardSelection();
+    renderTools();
     renderOrders();
     plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
     plot.classList.remove("is-harvesting");
   } else if (selectedTool === "weed-killer") {
     selectedTool = null;
     renderTools();
+    await animateTreatment(plot, "weed-killer");
     await removeCrop(plot);
   } else if (selectedTool === "fertiliser") {
     plot.dataset.water = String(Number(plot.dataset.water) + 3);
     selectedTool = null;
     updateCropProgress(plot);
+    await animateTreatment(plot, "fertiliser");
   }
 
   if (selectedTool && turnActions[selectedTool] === 0) selectedTool = null;
   renderTools();
+  } finally {
+    plot.classList.remove("is-treating");
+  }
 }
 
 toolButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (pendingDiscardCount > 0) return;
     const tool = button.dataset.tool;
     selectedTool = selectedTool === tool ? null : tool;
     renderTools();
@@ -617,11 +761,14 @@ shopCards.forEach((card) => {
       updateCoinDisplay(currentPlayer);
       if (item.upgrade) {
         playerUpgrades[currentPlayer][item.upgrade] += 1;
-        turnActions[item.upgrade] += 1;
+        if (item.upgrade in turnActions) turnActions[item.upgrade] += 1;
+        if (item.upgrade === "storage") updateResourceCapacity(currentPlayer);
+      } else if (item.seedCrop) {
+        selectedTool = `seed:${item.seedCrop}`;
       } else {
         selectedTool = item.tool;
       }
-      await slideCardAway(card, card.parentElement, ".shop-card");
+      await slideCardAway(card, card.parentElement, ".shop-card", 360, "up");
       renderTools();
     });
   });
@@ -643,6 +790,13 @@ orderList.addEventListener("keydown", (event) => {
   handleOrderPress(event);
 });
 
+document.querySelectorAll(".resource-list").forEach((resourceList) => {
+  resourceList.addEventListener("click", (event) => {
+    const item = event.target.closest(".resource-item[data-crop]");
+    if (item) discardResource(item);
+  });
+});
+
 function announceTurn() {
   const playerName = `Player ${currentPlayer}`;
   turnAnnouncement.textContent = `${playerName}'s Turn!`;
@@ -660,7 +814,7 @@ function announceTurn() {
 }
 
 nextTurnButton.addEventListener("click", () => {
-  if (isActionLocked()) return;
+  if (isActionLocked() || turnActions.water > 0 || pendingDiscardCount > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
@@ -675,6 +829,9 @@ nextTurnButton.addEventListener("click", () => {
   );
   replacePurchasedShopItems();
   advanceCropSpawnTimer();
+  grid.querySelectorAll(".plot").forEach((plot) => {
+    if (plot.dataset.crop) plot.dataset.turnWatered = "0";
+  });
   currentPlayer = currentPlayer === 1 ? 2 : 1;
   selectedTool = null;
   turnActions = {
