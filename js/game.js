@@ -509,6 +509,7 @@ function plantCrop(plot, crop) {
   const progress = document.createElement("span");
   progress.className = "crop-progress";
   progress.setAttribute("aria-hidden", "true");
+  progress.innerHTML = '<span class="crop-progress-remaining"></span><span class="crop-progress-label"></span>';
   plot.append(progress);
   plot.setAttribute("aria-label", `${plot.getAttribute("aria-label")}, growing ${crop.name}`);
   updateCropProgress(plot);
@@ -585,8 +586,12 @@ function updateCropProgress(plot) {
 
   const water = Number(plot.dataset.water);
   const waterNeeded = Number(plot.dataset.waterNeeded);
-  progress.dataset.label = `${water}/${waterNeeded}`;
-  progress.style.setProperty("--water-progress", String(water / waterNeeded));
+  const currentProgress = Math.min(1, water / waterNeeded);
+  const remainingCapacity = Math.max(0, waterNeeded - water);
+  const remainingThisTurn = Math.min(turnActions.water, remainingCapacity);
+  progress.style.setProperty("--water-progress", String(currentProgress));
+  progress.style.setProperty("--water-remaining", String(remainingThisTurn / waterNeeded));
+  progress.querySelector(".crop-progress-label").textContent = `${water}/${waterNeeded}`;
   plot.classList.toggle("fully-grown", water >= waterNeeded);
 }
 
@@ -650,6 +655,7 @@ function renderTools() {
     mustUseWater ? `Next Turn: use all ${turnActions.water} water actions first` : "Next Turn",
   );
 
+  grid.querySelectorAll(".plot[data-crop]").forEach(updateCropProgress);
   updateEligiblePlots();
   renderShop();
 }
