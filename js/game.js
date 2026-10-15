@@ -351,7 +351,8 @@ function renderOrders() {
   refreshCount.textContent = String(turnsUntilOrderRefresh);
   refreshCount.setAttribute("aria-label", `${turnsUntilOrderRefresh} turns until order refresh`);
   orderList.replaceChildren(
-    ...orders.map((order, orderIndex) => {
+    ...orders.flatMap((order, orderIndex) => {
+      if (order.filled) return [];
       const button = document.createElement("div");
       button.className = "order-card";
       button.dataset.order = String(orderIndex);
@@ -378,12 +379,13 @@ function renderOrders() {
           icon.style.backgroundImage = `url("${source}")`;
         });
       });
-      return button;
+      return [button];
     }),
   );
 }
 
 async function refreshOrders() {
+  orderList.style.minHeight = "";
   await Promise.all(
     [...orderList.querySelectorAll(".order-card")].map((card) =>
       slideCardAway(card, orderList, ".order-card", 420, "down"),
@@ -424,6 +426,9 @@ async function fillOrder(orderIndex) {
   updateCoinDisplay(currentPlayer);
   order.filled = true;
   renderShop();
+  if (orders.every((candidate) => candidate.filled)) {
+    orderList.style.minHeight = `${orderList.offsetHeight}px`;
+  }
   await slideCardAway(card, orderList, ".order-card", 720, "down");
 }
 
@@ -905,7 +910,6 @@ nextTurnButton.addEventListener("click", async () => {
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
-  orders = orders.map((order) => (order.filled ? createOrder() : order));
   const enteringShopKeys = new Set(
     shopSlots
       .map((slot, index) => (slot.purchased ? String(index) : null))
