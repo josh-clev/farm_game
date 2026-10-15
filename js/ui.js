@@ -217,9 +217,23 @@
     const weather = document.createElement("span");
     weather.className = `weather-animation weather-${type}`;
     weather.setAttribute("aria-hidden", "true");
-    weather.style.setProperty("--weather-image", `url("assets/${type}.png")`);
+    const icon = document.createElement("span");
+    icon.className = "weather-icon";
+    icon.style.setProperty("--weather-image", `url("assets/${type}.png")`);
+    const label = document.createElement("span");
+    label.className = "weather-label";
+    label.textContent = `${type}!`;
+    weather.append(icon, label);
     document.body.append(weather);
-    weather.addEventListener("animationend", () => weather.remove(), { once: true });
+    return weather.animate(
+      [
+        { opacity: 0, transform: "translate(-50%, -50%) scale(0.72) rotate(-5deg)" },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)", offset: 0.18 },
+        { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)", offset: 0.68 },
+        { opacity: 0, transform: "translate(-50%, -50%) scale(0.82) rotate(2deg)", offset: 1 },
+      ],
+      { duration: 2600, easing: "cubic-bezier(0.2, 0.75, 0.35, 1)", fill: "forwards" },
+    ).finished.finally(() => weather.remove());
   }
 
   window.FarmGameUi = {

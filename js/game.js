@@ -694,7 +694,7 @@ async function applyWeatherEvent() {
   const weather = roll < 0.1 ? "rain" : roll < 0.2 ? "drought" : null;
   if (!weather) return;
 
-  animateWeather(weather);
+  await animateWeather(weather);
   const cropsToRemove = [];
   grid.querySelectorAll(".plot[data-crop]").forEach((plot) => {
     const water = Number(plot.dataset.water);
