@@ -551,6 +551,15 @@ function plantCrop(plot, crop) {
   animateCropAppearance(cropIcon);
 }
 
+function getNextCropSpawnTurns() {
+  const existingPlantCount = neutralPlots.filter((plot) => plot.dataset.crop).length;
+  if (existingPlantCount <= 2) return 1;
+  if (existingPlantCount <= 4) return 2;
+  if (existingPlantCount <= 6) return 3;
+  if (existingPlantCount === 7) return 4;
+  return 5;
+}
+
 function queueNextCropSpawn() {
   const availablePlots = neutralPlots.filter(
     (plot) => !plot.dataset.crop && !plot.querySelector(".spawn-timer"),
@@ -558,15 +567,16 @@ function queueNextCropSpawn() {
   if (availablePlots.length === 0) return;
 
   spawnTimerPlot = availablePlots[Math.floor(Math.random() * availablePlots.length)];
+  const spawnTurns = getNextCropSpawnTurns();
   const timer = document.createElement("span");
   timer.className = "spawn-timer";
-  timer.textContent = "2";
-  timer.dataset.turns = "2";
+  timer.textContent = String(spawnTurns);
+  timer.dataset.turns = String(spawnTurns);
   timer.setAttribute("aria-hidden", "true");
   spawnTimerPlot.append(timer);
   spawnTimerPlot.setAttribute(
     "aria-label",
-    `${spawnTimerPlot.getAttribute("aria-label")}, crop arriving in 2 turns`,
+    `${spawnTimerPlot.getAttribute("aria-label")}, crop arriving in ${spawnTurns} turns`,
   );
 }
 
