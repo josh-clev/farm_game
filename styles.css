@@ -276,11 +276,11 @@ body {
 .shop-card {
   position: relative;
   display: grid;
-  flex: 0 1 110px;
+  flex: 0 1 118px;
   grid-template-columns: clamp(30px, 4vw, 42px) minmax(0, 1fr);
   align-items: center;
   gap: clamp(3px, 0.6vw, 7px);
-  min-height: clamp(34px, 5vh, 44px);
+  min-height: clamp(38px, 5vh, 48px);
   padding: 4px 6px;
   border: 3px solid #805326;
   border-radius: 12px;
@@ -341,11 +341,11 @@ body {
 .order-card {
   position: relative;
   display: grid;
-  flex: 0 1 112px;
+  flex: 0 1 120px;
   grid-template-columns: 1fr;
   align-items: center;
   gap: 6px;
-  min-height: clamp(58px, 9vh, 78px);
+  min-height: clamp(64px, 9vh, 84px);
   padding: 5px 8px;
   border: 3px solid #805326;
   border-radius: 12px;
@@ -1033,14 +1033,14 @@ body {
   }
 
   .shop-card {
-    flex-basis: min(22%, 110px);
+    flex-basis: min(22%, 116px);
     grid-template-columns: minmax(20px, 34px) minmax(0, 1fr);
     padding: 3px;
     border-width: 2px;
   }
 
   .order-card {
-    flex-basis: min(30%, 112px);
+    flex-basis: min(30%, 118px);
     padding: 4px;
     border-width: 2px;
   }
@@ -1207,6 +1207,7 @@ body {
   width: auto;
   height: 100%;
   max-height: 100%;
+  transform: scale(0.94);
 }
 
 .action-dock,
