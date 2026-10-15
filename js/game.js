@@ -481,10 +481,10 @@ for (let index = 0; index < 25; index += 1) {
   plot.dataset.plot = String(index);
   plot.setAttribute("aria-label", `Farm plot ${index + 1}`);
 
-  if (row >= 3 && column <= 1) {
+  if (row === 4 && column === 0) {
     plot.classList.add("player-one-plot");
     plot.setAttribute("aria-label", `Farm plot ${index + 1}, Player 1 territory`);
-  } else if (row >= 3 && column >= 3) {
+  } else if (row === 4 && column === 4) {
     plot.classList.add("player-two-plot");
     plot.setAttribute("aria-label", `Farm plot ${index + 1}, Player 2 territory`);
   }
