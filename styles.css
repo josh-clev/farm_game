@@ -27,7 +27,11 @@ body {
   justify-content: center;
   gap: 24px;
   padding: 24px;
-  background: rgb(55 91 35 / 92%);
+  background-color: #74bf4b;
+  background-image: url("assets/main_menu_background.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #fff7c4;
   text-align: center;
 }
@@ -46,11 +50,18 @@ body {
   padding: 10px 22px;
   border: 3px solid #805326;
   border-radius: 12px;
-  background: #fff0b7;
+  background: linear-gradient(#fff8cf, #f1ca69);
   box-shadow: 0 4px #5c7e35;
   color: #51361d;
   font: 1000 1.15rem system-ui, sans-serif;
   cursor: pointer;
+  text-shadow: 0 1px 0 #fffbe3;
+}
+
+.menu-button:hover,
+.menu-button:focus-visible {
+  border-color: #fff06a;
+  box-shadow: 0 4px #5c7e35, 0 0 12px #fff07a;
 }
 
 .menu-button:active {

@@ -81,10 +81,12 @@ function showVictory(player) {
 playButton.addEventListener("click", () => {
   mainMenu.hidden = true;
   gameScene.hidden = false;
+  turnAnnouncement.hidden = false;
 });
 returnMenuButton.addEventListener("click", () => {
   victoryScreen.hidden = true;
   gameScene.hidden = true;
+  turnAnnouncement.hidden = true;
   mainMenu.hidden = false;
 });
 
