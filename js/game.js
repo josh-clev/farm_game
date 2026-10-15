@@ -636,6 +636,10 @@ function makeToolIcon(type) {
   return icon;
 }
 
+function hasWaterablePlots() {
+  return [...grid.querySelectorAll(".plot")].some((plot) => canUseTool(plot, "water"));
+}
+
 function renderTools() {
   waterIcons.replaceChildren(...Array.from({ length: turnActions.water }, () => makeToolIcon("water")));
   cutIcons.replaceChildren(...Array.from({ length: turnActions.cut }, () => makeToolIcon("cut")));
@@ -649,7 +653,7 @@ function renderTools() {
     button.setAttribute("aria-label", `${tool === "water" ? "Water" : "Harvest"}: ${turnActions[tool]} remaining`);
   });
 
-  const mustUseWater = turnActions.water > 0;
+  const mustUseWater = turnActions.water > 0 && hasWaterablePlots();
   nextTurnButton.disabled = mustUseWater || pendingDiscardCount > 0;
   nextTurnButton.setAttribute(
     "aria-label",
@@ -822,7 +826,7 @@ function announceTurn() {
 }
 
 nextTurnButton.addEventListener("click", () => {
-  if (isActionLocked() || turnActions.water > 0 || pendingDiscardCount > 0) return;
+  if (isActionLocked() || (turnActions.water > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
