@@ -352,7 +352,9 @@ function createOrder(rewardType = "coins") {
   }, 0);
   const resourceCount = items.reduce((total, item) => total + item.amount, 0);
   const rewardRate = resourceCount >= 5 ? 0.25 : resourceCount >= 4 ? 0.15 : resourceCount >= 3 ? 0.10 : 0;
-  const reward = Math.ceil(fullReward * (1 + rewardRate));
+  const calculatedReward = Math.ceil(fullReward * (1 + rewardRate));
+  const minimumReward = currentRound >= 5 ? 65 : currentRound === 4 ? 50 : currentRound === 3 ? 35 : currentRound === 2 ? 30 : 0;
+  const reward = Math.max(calculatedReward, minimumReward);
   const coinReward = rewardType === "renown" ? 0 : rewardType === "mixed" ? Math.floor(reward / 2) : reward;
   const renownReward = rewardType === "coins" ? 0 : Math.floor((reward - coinReward) / 5);
   return { id: nextOrderId++, items, coinReward, renownReward, rewardType, filled: false };
