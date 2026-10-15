@@ -105,14 +105,10 @@ body {
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background-color: #74bf4b;
-  background-image:
-    var(--grass-image, linear-gradient(transparent, transparent)),
-    radial-gradient(circle at 18% 22%, #a4da68 0 3px, transparent 4px),
-    radial-gradient(circle at 76% 68%, #5ca83d 0 2px, transparent 3px),
-    radial-gradient(circle at 43% 82%, #96d15e 0 3px, transparent 4px),
-    linear-gradient(135deg, transparent 48%, rgb(255 255 255 / 8%) 50%, transparent 52%);
-  background-size: cover, 72px 72px, 54px 54px, 90px 90px, 32px 32px;
+  background-image: url("assets/game_background.png");
+  background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   touch-action: manipulation;
   user-select: none;
 }
