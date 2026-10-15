@@ -479,6 +479,7 @@ async function refreshOrders() {
   currentRound += 1;
   orders = roundRewardTypes(currentRound).map((type) => createOrder(type));
   renderOrders();
+  announceRound();
   animateCardLayout(orderList, ".order-card", new Map(), new Set(orders.map((order) => String(order.id))));
 }
 
@@ -1014,6 +1015,7 @@ document.querySelectorAll(".resource-list").forEach((resourceList) => {
 function announceTurn() {
   const playerName = `Player ${currentPlayer}`;
   turnAnnouncement.textContent = `${playerName}'s Turn!`;
+  turnAnnouncement.classList.remove("round-announcement");
   turnAnnouncement.classList.toggle("player-one", currentPlayer === 1);
   turnAnnouncement.classList.toggle("player-two", currentPlayer === 2);
   turnBadge.classList.toggle("player-one-badge", currentPlayer === 1);
@@ -1022,6 +1024,15 @@ function announceTurn() {
   actionDock.classList.toggle("player-one-dock", currentPlayer === 1);
   actionDock.classList.toggle("player-two-dock", currentPlayer === 2);
 
+  turnAnnouncement.classList.remove("is-playing");
+  void turnAnnouncement.offsetWidth;
+  turnAnnouncement.classList.add("is-playing");
+}
+
+function announceRound() {
+  turnAnnouncement.textContent = `ROUND ${currentRound}!`;
+  turnAnnouncement.classList.remove("player-one", "player-two");
+  turnAnnouncement.classList.add("round-announcement");
   turnAnnouncement.classList.remove("is-playing");
   void turnAnnouncement.offsetWidth;
   turnAnnouncement.classList.add("is-playing");

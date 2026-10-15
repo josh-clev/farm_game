@@ -966,6 +966,10 @@ body {
   color: #e34141;
 }
 
+.turn-announcement.round-announcement {
+  color: #f5c542;
+}
+
 .turn-announcement.is-playing {
   animation: announce-turn 1.45s cubic-bezier(0.3, 0.75, 0.35, 1) both;
 }
