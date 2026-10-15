@@ -50,7 +50,7 @@ const playerResources = {
   1: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
   2: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
 };
-const playerCoins = { 1: 10, 2: 10 };
+const playerCoins = { 1: 50, 2: 50 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
