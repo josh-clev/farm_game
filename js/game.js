@@ -738,7 +738,7 @@ async function applyWeatherEvent() {
       ? Math.min(maxWater, water + 1)
       : Math.max(0, water - 1);
     plot.dataset.water = String(nextWater);
-    if (weather === "drought" && nextWater === 0) cropsToRemove.push(plot);
+    if (weather === "drought" && water === 0) cropsToRemove.push(plot);
     else updateCropProgress(plot);
   });
 
