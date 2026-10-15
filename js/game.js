@@ -632,6 +632,7 @@ function updateCropProgress(plot) {
 }
 
 function canUseTool(plot, tool) {
+  if (tool === "plot-upgrade") return canUpgradePlot(plot);
   if (!plot.dataset.crop) return false;
   if (!canInteractWithPlot(plot, tool)) return false;
 
