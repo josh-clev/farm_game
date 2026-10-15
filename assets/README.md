@@ -18,6 +18,8 @@ Keep the base filename below unchanged when replacing artwork; no code edits are
 - `sugarcane_icon.png` or `sugarcane_icon.jpg`
 - `cotton_icon.png` or `cotton_icon.jpg`
 - `tomato_icon.png` or `tomato_icon.jpg`
+- `rain.png`
+- `drought.png`
 
 Resource icons are intentionally separate from the matching field crop artwork, so inventory and plant graphics can be replaced independently.
 

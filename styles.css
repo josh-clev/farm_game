@@ -847,6 +847,26 @@ body {
   transform: translateX(-120%) rotate(-4deg) scale(0.85);
 }
 
+.weather-animation {
+  position: fixed;
+  z-index: 20;
+  top: 50%;
+  left: 50%;
+  width: min(42vw, 360px);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: var(--weather-image) center / contain no-repeat;
+  transform: translate(-50%, -50%);
+  animation: weather-event 1.8s cubic-bezier(0.2, 0.75, 0.35, 1) both;
+}
+
+@keyframes weather-event {
+  0% { opacity: 0; transform: translate(-50%, -44%) scale(0.7) rotate(-5deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(2deg); }
+  100% { opacity: 0; transform: translate(-50%, -56%) scale(0.88) rotate(-2deg); }
+}
+
 .turn-announcement.player-two {
   color: #e34141;
 }

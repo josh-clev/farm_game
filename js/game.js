@@ -17,6 +17,7 @@ const {
   animateCropAppearance,
   animateFlyingIcon,
   animateTreatment,
+  animateWeather,
   captureCardPositions,
   cropSlug,
   isActionLocked,
@@ -688,6 +689,27 @@ async function removeCrop(plot) {
   plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
 }
 
+async function applyWeatherEvent() {
+  const roll = Math.random();
+  const weather = roll < 0.1 ? "rain" : roll < 0.2 ? "drought" : null;
+  if (!weather) return;
+
+  animateWeather(weather);
+  const cropsToRemove = [];
+  grid.querySelectorAll(".plot[data-crop]").forEach((plot) => {
+    const water = Number(plot.dataset.water);
+    const maxWater = Number(plot.dataset.waterNeeded);
+    const nextWater = weather === "rain"
+      ? Math.min(maxWater, water + 1)
+      : Math.max(0, water - 1);
+    plot.dataset.water = String(nextWater);
+    if (weather === "drought" && nextWater === 0) cropsToRemove.push(plot);
+    else updateCropProgress(plot);
+  });
+
+  await Promise.all(cropsToRemove.map(removeCrop));
+}
+
 async function useTool(plot) {
   const canStackTreatment = selectedTool === "water";
   if ((plot.classList.contains("is-treating") && !canStackTreatment) || pendingDiscardCount > 0) return;
@@ -825,7 +847,7 @@ function announceTurn() {
   turnAnnouncement.classList.add("is-playing");
 }
 
-nextTurnButton.addEventListener("click", () => {
+nextTurnButton.addEventListener("click", async () => {
   if (isActionLocked() || (turnActions.water > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
@@ -845,6 +867,7 @@ nextTurnButton.addEventListener("click", () => {
     if (plot.dataset.crop) plot.dataset.turnWatered = "0";
   });
   currentPlayer = currentPlayer === 1 ? 2 : 1;
+  await applyWeatherEvent();
   selectedTool = null;
   turnActions = {
     water: 3 + playerUpgrades[currentPlayer].water,

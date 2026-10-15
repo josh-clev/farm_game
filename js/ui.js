@@ -213,12 +213,22 @@
     }).finished.finally(() => treatment.remove());
   }
 
+  function animateWeather(type) {
+    const weather = document.createElement("span");
+    weather.className = `weather-animation weather-${type}`;
+    weather.setAttribute("aria-hidden", "true");
+    weather.style.setProperty("--weather-image", `url("assets/${type}.png")`);
+    document.body.append(weather);
+    weather.addEventListener("animationend", () => weather.remove(), { once: true });
+  }
+
   window.FarmGameUi = {
     activateOnPress,
     animateCardLayout,
     animateCropAppearance,
     animateFlyingIcon,
     animateTreatment,
+    animateWeather,
     captureCardPositions,
     cropSlug,
     isActionLocked: () => actionLocked,
