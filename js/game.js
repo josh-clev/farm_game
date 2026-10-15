@@ -7,6 +7,7 @@ const waterIcons = document.querySelector(".water-icons");
 const cutIcons = document.querySelector(".cut-icons");
 const actionDock = document.querySelector(".action-dock");
 const orderList = document.querySelector(".order-list");
+const orderRoundCount = document.querySelector(".order-round-count");
 const allShopCards = [...document.querySelectorAll(".shop-card")];
 const shopCards = allShopCards.slice(0, 3);
 allShopCards.slice(3).forEach((card) => { card.hidden = true; });
@@ -364,9 +365,8 @@ function canFillOrder(order) {
 }
 
 function renderOrders() {
-  const roundCount = document.querySelector(".order-round-count");
-  roundCount.textContent = String(currentRound);
-  roundCount.setAttribute("aria-label", `Round ${currentRound}`);
+  orderRoundCount.textContent = String(currentRound);
+  orderRoundCount.setAttribute("aria-label", `Round ${currentRound}`);
   const refreshCount = document.querySelector(".order-refresh-count");
   refreshCount.textContent = String(turnsUntilOrderRefresh);
   refreshCount.setAttribute("aria-label", `${turnsUntilOrderRefresh} turns until order refresh`);
@@ -408,6 +408,54 @@ function renderOrders() {
   );
 }
 
+function roundRewardTypes(round) {
+  if (round === 1) return ["coins", "coins", "coins", "coins", "coins"];
+  const types = round === 2
+    ? ["coins", "coins", "coins", "mixed", "renown"]
+    : ["coins", "coins", "renown", "mixed", "mixed"];
+  for (let index = types.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [types[index], types[swapIndex]] = [types[swapIndex], types[index]];
+  }
+  return types;
+}
+
+function setDebugRound(round) {
+  currentRound = Math.max(1, Math.floor(Number(round) || 1));
+  orders = roundRewardTypes(currentRound).map((type) => createOrder(type));
+  renderOrders();
+}
+
+function closeRoundDebugMenu() {
+  document.querySelector(".round-debug-menu")?.remove();
+  orderRoundCount.setAttribute("aria-expanded", "false");
+}
+
+function openRoundDebugMenu() {
+  if (document.querySelector(".round-debug-menu")) {
+    closeRoundDebugMenu();
+    return;
+  }
+  const menu = document.createElement("div");
+  menu.className = "round-debug-menu";
+  menu.setAttribute("role", "dialog");
+  menu.setAttribute("aria-label", "Round debug menu");
+  menu.innerHTML = `<label for="round-debug-input">Round</label><input id="round-debug-input" type="number" min="1" step="1" value="${currentRound}">`;
+  orderRoundCount.parentElement.append(menu);
+  orderRoundCount.setAttribute("aria-expanded", "true");
+  const input = menu.querySelector("input");
+  input.focus();
+  input.select();
+  input.addEventListener("change", () => setDebugRound(input.value));
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      setDebugRound(input.value);
+      closeRoundDebugMenu();
+    }
+    if (event.key === "Escape") closeRoundDebugMenu();
+  });
+}
+
 async function refreshOrders() {
   orderList.style.minHeight = "";
   await Promise.all(
@@ -416,14 +464,7 @@ async function refreshOrders() {
     ),
   );
   currentRound += 1;
-  const rewardTypes = currentRound === 2
-    ? ["coins", "coins", "coins", "mixed", "renown"]
-    : ["coins", "coins", "renown", "mixed", "mixed"];
-  for (let index = rewardTypes.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [rewardTypes[index], rewardTypes[swapIndex]] = [rewardTypes[swapIndex], rewardTypes[index]];
-  }
-  orders = rewardTypes.map((type) => createOrder(type));
+  orders = roundRewardTypes(currentRound).map((type) => createOrder(type));
   renderOrders();
   animateCardLayout(orderList, ".order-card", new Map(), new Set(orders.map((order) => String(order.id))));
 }
@@ -935,6 +976,15 @@ function handleOrderPress(event) {
 }
 
 orderList.addEventListener("click", handleOrderPress);
+orderRoundCount.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openRoundDebugMenu();
+});
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".round-debug-menu") && !event.target.closest(".order-round-count")) {
+    closeRoundDebugMenu();
+  }
+});
 orderList.addEventListener("keydown", (event) => {
   if (event.key !== "Enter" && event.key !== " ") return;
   event.preventDefault();
