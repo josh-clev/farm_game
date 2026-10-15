@@ -336,25 +336,36 @@ async function animateHarvest(plot, cropName) {
 }
 
 function createOrder(rewardType = "coins") {
-  const ingredientCount = Math.random() < 0.55 ? 1 : 2;
-  const availableCrops = [...crops];
-  const items = [];
-
-  for (let index = 0; index < ingredientCount; index += 1) {
-    const cropIndex = Math.floor(Math.random() * availableCrops.length);
-    const [crop] = availableCrops.splice(cropIndex, 1);
-    items.push({ crop: crop.name, amount: 1 + Math.floor(Math.random() * 3) });
+  const minimumValue = currentRound >= 5 ? 65 : currentRound === 4 ? 50 : currentRound === 3 ? 35 : currentRound === 2 ? 30 : 0;
+  const maximumValue = currentRound === 1 ? 80 : currentRound === 2 ? 90 : currentRound === 3 ? 120 : currentRound === 4 ? 160 : Infinity;
+  let items = [];
+  let fullReward = 0;
+  for (let attempt = 0; attempt < 500; attempt += 1) {
+    const ingredientCount = Math.random() < 0.55 ? 1 : 2;
+    const availableCrops = [...crops];
+    const candidateItems = [];
+    for (let index = 0; index < ingredientCount; index += 1) {
+      const cropIndex = Math.floor(Math.random() * availableCrops.length);
+      const [crop] = availableCrops.splice(cropIndex, 1);
+      candidateItems.push({ crop: crop.name, amount: 1 + Math.floor(Math.random() * 3) });
+    }
+    const candidateValue = candidateItems.reduce((total, item) => {
+      const crop = crops.find((candidate) => candidate.name === item.crop);
+      return total + item.amount * crop.marketValue;
+    }, 0);
+    if (candidateValue >= minimumValue && candidateValue <= maximumValue) {
+      items = candidateItems;
+      fullReward = candidateValue;
+      break;
+    }
   }
-
-  const fullReward = items.reduce((total, item) => {
-    const crop = crops.find((candidate) => candidate.name === item.crop);
-    return total + item.amount * crop.marketValue;
-  }, 0);
+  if (items.length === 0) {
+    items = [{ crop: crops[0].name, amount: Math.max(1, Math.ceil(minimumValue / crops[0].marketValue)) }];
+    fullReward = items[0].amount * crops[0].marketValue;
+  }
   const resourceCount = items.reduce((total, item) => total + item.amount, 0);
   const rewardRate = resourceCount >= 5 ? 0.25 : resourceCount >= 4 ? 0.15 : resourceCount >= 3 ? 0.10 : 0;
-  const calculatedReward = Math.ceil(fullReward * (1 + rewardRate));
-  const minimumReward = currentRound >= 5 ? 65 : currentRound === 4 ? 50 : currentRound === 3 ? 35 : currentRound === 2 ? 30 : 0;
-  const reward = Math.max(calculatedReward, minimumReward);
+  const reward = Math.ceil(fullReward * (1 + rewardRate));
   const coinReward = rewardType === "renown" ? 0 : rewardType === "mixed" ? Math.floor(reward / 2) : reward;
   const renownReward = rewardType === "coins" ? 0 : Math.floor((reward - coinReward) / 5);
   return { id: nextOrderId++, items, coinReward, renownReward, rewardType, filled: false };
