@@ -408,15 +408,18 @@ async function fillOrder(orderIndex) {
       `.resource-count[data-player="${currentPlayer}"][data-crop="${item.crop}"]`,
     )?.parentElement.querySelector(".resource-icon");
     const targetIcon = card.querySelector(`.order-icon[data-crop="${cropSlug(item.crop)}"]`);
-    for (let amount = 0; amount < item.amount; amount += 1) {
-      await animateFlyingIcon(sourceIcon, targetIcon, sourceIcon, 1120);
-      playerResources[currentPlayer][item.crop] -= 1;
-      await updateResourcePool(currentPlayer, item.crop);
-      targetIcon.animate(
-        [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
-        { duration: 440, easing: "ease-out" },
-      );
-    }
+    await Promise.all(Array.from({ length: item.amount }, (_, amount) => new Promise((resolve) => {
+      window.setTimeout(async () => {
+        await animateFlyingIcon(sourceIcon, targetIcon, sourceIcon, 1120);
+        playerResources[currentPlayer][item.crop] -= 1;
+        await updateResourcePool(currentPlayer, item.crop);
+        targetIcon.animate(
+          [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
+          { duration: 440, easing: "ease-out" },
+        );
+        resolve();
+      }, amount * 180);
+    })));
   }
 
   const rewardIcon = card.querySelector(".order-reward .coin-icon");
