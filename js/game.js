@@ -57,7 +57,7 @@ let spawnTimerPlot = null;
 let nextOrderId = 1;
 let turnsUntilShopRefresh = 10;
 let turnsUntilOrderRefresh = 15;
-const BASE_MAX_RESOURCES = 7;
+const BASE_MAX_RESOURCES = 5;
 let pendingDiscardCount = 0;
 
 function updateCoinDisplay(player) {
@@ -273,6 +273,7 @@ async function discardResource(item) {
     turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
     updateDiscardSelection();
   }
+  renderTools();
   renderOrders();
 }
 
