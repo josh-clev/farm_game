@@ -552,7 +552,9 @@ function plantCrop(plot, crop) {
 }
 
 function getNextCropSpawnTurns() {
-  const existingPlantCount = neutralPlots.filter((plot) => plot.dataset.crop).length;
+  const existingPlantCount = neutralPlots.filter(
+    (plot) => getPlotOwner(plot) === null && plot.dataset.crop,
+  ).length;
   if (existingPlantCount <= 2) return 1;
   if (existingPlantCount <= 4) return 2;
   if (existingPlantCount <= 6) return 3;
@@ -562,7 +564,9 @@ function getNextCropSpawnTurns() {
 
 function queueNextCropSpawn() {
   const availablePlots = neutralPlots.filter(
-    (plot) => !plot.dataset.crop && !plot.querySelector(".spawn-timer"),
+    (plot) => getPlotOwner(plot) === null
+      && !plot.dataset.crop
+      && !plot.querySelector(".spawn-timer"),
   );
   if (availablePlots.length === 0) return;
 
@@ -605,6 +609,10 @@ function advanceCropSpawnTimer() {
     "aria-label",
     plot.getAttribute("aria-label").replace(/, crop arriving in \d+ turns$/, ""),
   );
+  if (getPlotOwner(plot) !== null) {
+    queueNextCropSpawn();
+    return;
+  }
   plantCrop(plot, pickRandomCrop());
   queueNextCropSpawn();
 }
