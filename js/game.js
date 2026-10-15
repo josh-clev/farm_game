@@ -55,6 +55,7 @@ const playerCoins = { 1: 50, 2: 50 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
+let turnsUntilShopRefresh = 10;
 const BASE_MAX_RESOURCES = 7;
 let pendingDiscardCount = 0;
 
@@ -66,6 +67,9 @@ function updateCoinDisplay(player) {
 
 
 function renderShop() {
+  const refreshCount = document.querySelector(".shop-refresh-count");
+  refreshCount.textContent = String(turnsUntilShopRefresh);
+  refreshCount.setAttribute("aria-label", `${turnsUntilShopRefresh} turns until shop refresh`);
   shopCards.forEach((card, slotIndex) => {
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
@@ -89,6 +93,21 @@ function renderShop() {
       slot.purchased ? `${item.name}, sold out until next turn` : `${item.name}, costs ${item.price} coins`,
     );
   });
+}
+
+async function refreshShop() {
+  const shopList = document.querySelector(".shop-list");
+  const visibleCards = shopCards.filter((card) => !card.hidden);
+  await Promise.all(visibleCards.map((card) => slideCardAway(card, shopList, ".shop-card", 420, "up")));
+
+  const refreshedKeys = new Set();
+  shopSlots.forEach((slot) => {
+    slot.itemKey = drawShopItem(refreshedKeys);
+    refreshedKeys.add(slot.itemKey);
+    slot.purchased = false;
+  });
+  renderShop();
+  animateCardLayout(shopList, ".shop-card", new Map(), new Set(shopCards.map((card) => card.dataset.layoutKey)));
 }
 
 function replacePurchasedShopItems() {
@@ -862,6 +881,13 @@ nextTurnButton.addEventListener("click", async () => {
       .filter(Boolean),
   );
   replacePurchasedShopItems();
+  turnsUntilShopRefresh -= 1;
+  let shopWasRefreshed = false;
+  if (turnsUntilShopRefresh === 0) {
+    turnsUntilShopRefresh = 10;
+    shopWasRefreshed = true;
+    await refreshShop();
+  }
   advanceCropSpawnTimer();
   grid.querySelectorAll(".plot").forEach((plot) => {
     if (plot.dataset.crop) plot.dataset.turnWatered = "0";
@@ -878,7 +904,9 @@ nextTurnButton.addEventListener("click", async () => {
   renderShop();
   requestAnimationFrame(() => {
     animateCardLayout(orderList, ".order-card", previousOrderPositions, enteringOrderIds);
-    animateCardLayout(document.querySelector(".shop-list"), ".shop-card", previousShopPositions, enteringShopKeys);
+    if (!shopWasRefreshed) {
+      animateCardLayout(document.querySelector(".shop-list"), ".shop-card", previousShopPositions, enteringShopKeys);
+    }
   });
   announceTurn();
 });
