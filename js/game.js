@@ -692,9 +692,9 @@ function updateEligiblePlots() {
   });
 }
 
-function makeToolIcon(type) {
+function makeToolIcon(type, isBonus = false) {
   const icon = document.createElement("span");
-  icon.className = `tool-icon ${type}-icon`;
+  icon.className = `tool-icon ${type}-icon${isBonus ? " bonus-water-icon" : ""}`;
   icon.textContent = type === "water" ? "🪣" : "✂️";
   return icon;
 }
@@ -703,8 +703,17 @@ function hasWaterablePlots() {
   return [...grid.querySelectorAll(".plot")].some((plot) => canUseTool(plot, "water"));
 }
 
+function getRegularWaterActions() {
+  return Math.max(0, turnActions.water - playerUpgrades[currentPlayer].water);
+}
+
 function renderTools() {
-  waterIcons.replaceChildren(...Array.from({ length: turnActions.water }, () => makeToolIcon("water")));
+  const bonusWater = Math.min(turnActions.water, playerUpgrades[currentPlayer].water);
+  const regularWater = getRegularWaterActions();
+  waterIcons.replaceChildren(
+    ...Array.from({ length: regularWater }, () => makeToolIcon("water")),
+    ...Array.from({ length: bonusWater }, () => makeToolIcon("water", true)),
+  );
   cutIcons.replaceChildren(...Array.from({ length: turnActions.cut }, () => makeToolIcon("cut")));
 
   toolButtons.forEach((button) => {
@@ -716,11 +725,11 @@ function renderTools() {
     button.setAttribute("aria-label", `${tool === "water" ? "Water" : "Harvest"}: ${turnActions[tool]} remaining`);
   });
 
-  const mustUseWater = turnActions.water > 0 && hasWaterablePlots();
+  const mustUseWater = regularWater > 0 && hasWaterablePlots();
   nextTurnButton.disabled = mustUseWater || pendingDiscardCount > 0;
   nextTurnButton.setAttribute(
     "aria-label",
-    mustUseWater ? `Next Turn: use all ${turnActions.water} water actions first` : "Next Turn",
+    mustUseWater ? `Next Turn: use all ${regularWater} regular water actions first` : "Next Turn",
   );
 
   grid.querySelectorAll(".plot[data-crop]").forEach(updateCropProgress);
@@ -910,7 +919,7 @@ function announceTurn() {
 }
 
 nextTurnButton.addEventListener("click", async () => {
-  if (isActionLocked() || (turnActions.water > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
+  if (isActionLocked() || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");

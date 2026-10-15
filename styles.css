@@ -770,6 +770,12 @@ body {
   background-image: var(--water-icon-image, none);
 }
 
+.water-icon.bonus-water-icon {
+  outline: 2px solid #43b95f;
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
 .cut-icon {
   background-image: var(--harvest-icon-image, none);
 }
