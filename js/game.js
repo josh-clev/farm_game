@@ -9,6 +9,7 @@ const actionDock = document.querySelector(".action-dock");
 const orderList = document.querySelector(".order-list");
 const orderRoundCount = document.querySelector(".order-round-count");
 const mainMenu = document.querySelector(".main-menu");
+const gameScene = document.querySelector(".game");
 const victoryScreen = document.querySelector(".victory-screen");
 const victorySummary = document.querySelector(".victory-summary");
 const victoryPlayer = document.querySelector(".victory-player");
@@ -77,8 +78,15 @@ function showVictory(player) {
   victoryScreen.hidden = false;
 }
 
-playButton.addEventListener("click", () => { mainMenu.hidden = true; });
-returnMenuButton.addEventListener("click", () => { victoryScreen.hidden = true; mainMenu.hidden = false; });
+playButton.addEventListener("click", () => {
+  mainMenu.hidden = true;
+  gameScene.hidden = false;
+});
+returnMenuButton.addEventListener("click", () => {
+  victoryScreen.hidden = true;
+  gameScene.hidden = true;
+  mainMenu.hidden = false;
+});
 
 function updateCoinDisplay(player) {
   const coinTotal = document.querySelector(`[data-player-coins="${player}"]`);
@@ -439,7 +447,7 @@ function renderOrders() {
 }
 
 function roundRewardTypes(round) {
-  if (round === 1) return ["coins", "coins", "coins", "coins", "coins"];
+  if (round === 1) return ["coins", "coins", "coins", "mixed", "mixed"];
   const types = round === 2
     ? ["coins", "coins", "coins", "mixed", "renown"]
     : ["coins", "coins", "renown", "mixed", "mixed"];
