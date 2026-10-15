@@ -8,6 +8,12 @@ const cutIcons = document.querySelector(".cut-icons");
 const actionDock = document.querySelector(".action-dock");
 const orderList = document.querySelector(".order-list");
 const orderRoundCount = document.querySelector(".order-round-count");
+const mainMenu = document.querySelector(".main-menu");
+const victoryScreen = document.querySelector(".victory-screen");
+const victorySummary = document.querySelector(".victory-summary");
+const victoryPlayer = document.querySelector(".victory-player");
+const playButton = document.querySelector(".play-button");
+const returnMenuButton = document.querySelector(".return-menu-button");
 const allShopCards = [...document.querySelectorAll(".shop-card")];
 const shopCards = allShopCards.slice(0, 3);
 allShopCards.slice(3).forEach((card) => { card.hidden = true; });
@@ -54,6 +60,8 @@ const playerResources = {
 };
 const playerCoins = { 1: 50, 2: 50 };
 const playerRenown = { 1: 0, 2: 0 };
+const soldResources = { 1: Object.fromEntries(crops.map((crop) => [crop.name, 0])), 2: Object.fromEntries(crops.map((crop) => [crop.name, 0])) };
+const earnedCoins = { 1: 0, 2: 0 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
@@ -62,6 +70,15 @@ let turnsUntilOrderRefresh = 20;
 let currentRound = 1;
 const BASE_MAX_RESOURCES = 5;
 let pendingDiscardCount = 0;
+
+function showVictory(player) {
+  victoryPlayer.textContent = `Player ${player}`;
+  victorySummary.innerHTML = `<table><thead><tr><th>Resource</th><th>Player 1</th><th>Player 2</th></tr></thead><tbody>${crops.map((crop) => `<tr><th>${crop.name}</th><td>${soldResources[1][crop.name]}</td><td>${soldResources[2][crop.name]}</td></tr>`).join("")}</tbody><tfoot><tr><th>Coins earned</th><td>${earnedCoins[1]}</td><td>${earnedCoins[2]}</td></tr></tfoot></table>`;
+  victoryScreen.hidden = false;
+}
+
+playButton.addEventListener("click", () => { mainMenu.hidden = true; });
+returnMenuButton.addEventListener("click", () => { victoryScreen.hidden = true; mainMenu.hidden = false; });
 
 function updateCoinDisplay(player) {
   const coinTotal = document.querySelector(`[data-player-coins="${player}"]`);
@@ -498,6 +515,7 @@ async function fillOrder(orderIndex) {
       window.setTimeout(async () => {
         await animateFlyingIcon(sourceIcon, targetIcon, sourceIcon, 1120);
         playerResources[currentPlayer][item.crop] -= 1;
+        soldResources[currentPlayer][item.crop] += 1;
         await updateResourcePool(currentPlayer, item.crop);
         targetIcon.animate(
           [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
@@ -519,7 +537,9 @@ async function fillOrder(orderIndex) {
     await animateFlyingIcon(rewardIcon, target, target, 1120);
     if (resource === "coins") playerCoins[currentPlayer] += amount;
     else playerRenown[currentPlayer] += amount;
+    if (resource === "coins") earnedCoins[currentPlayer] += amount;
     updateDisplay(currentPlayer);
+    if (playerRenown[currentPlayer] >= 50) showVictory(currentPlayer);
   }
   order.filled = true;
   renderShop();

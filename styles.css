@@ -17,6 +17,65 @@ body {
   overscroll-behavior: none;
 }
 
+.screen-overlay {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  background: rgb(55 91 35 / 92%);
+  color: #fff7c4;
+  text-align: center;
+}
+
+.screen-overlay[hidden] {
+  display: none;
+}
+
+.screen-overlay h1 {
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 4rem);
+  text-shadow: 0 4px 0 #4d702f;
+}
+
+.menu-button {
+  padding: 10px 22px;
+  border: 3px solid #805326;
+  border-radius: 12px;
+  background: #fff0b7;
+  box-shadow: 0 4px #5c7e35;
+  color: #51361d;
+  font: 1000 1.15rem system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.menu-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px #5c7e35;
+}
+
+.victory-summary {
+  max-width: min(92vw, 520px);
+  overflow-x: auto;
+}
+
+.victory-summary table {
+  border-collapse: collapse;
+  background: #fff0b7;
+  color: #51361d;
+  font-size: clamp(0.75rem, 2.5vw, 1rem);
+}
+
+.victory-summary th,
+.victory-summary td {
+  padding: 7px 12px;
+  border: 2px solid #805326;
+}
+
 body {
   display: grid;
   place-items: center;

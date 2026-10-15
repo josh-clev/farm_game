@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <section class="screen-overlay main-menu" aria-label="Main menu">
+      <h1>Farm Game</h1>
+      <button class="menu-button play-button" type="button">Play</button>
+    </section>
     <main class="game" aria-label="Farm game">
       <div class="turn-badge player-one-badge" role="status" aria-live="polite" aria-label="Player 1's turn">
         <span aria-hidden="true">★</span>
@@ -60,6 +64,12 @@
         Player 1's Turn!
       </div>
     </main>
+
+    <section class="screen-overlay victory-screen" aria-label="Victory" hidden>
+      <h1><span class="victory-player"></span> Wins!</h1>
+      <div class="victory-summary"></div>
+      <button class="menu-button return-menu-button" type="button">Return to Main Menu</button>
+    </section>
 
     <script src="js/game-data.js"></script>
     <script src="js/ui.js"></script>
