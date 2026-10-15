@@ -56,6 +56,7 @@ let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
 let turnsUntilShopRefresh = 10;
+let turnsUntilOrderRefresh = 15;
 const BASE_MAX_RESOURCES = 7;
 let pendingDiscardCount = 0;
 
@@ -346,6 +347,9 @@ function canFillOrder(order) {
 }
 
 function renderOrders() {
+  const refreshCount = document.querySelector(".order-refresh-count");
+  refreshCount.textContent = String(turnsUntilOrderRefresh);
+  refreshCount.setAttribute("aria-label", `${turnsUntilOrderRefresh} turns until order refresh`);
   orderList.replaceChildren(
     ...orders.map((order, orderIndex) => {
       const button = document.createElement("div");
@@ -377,6 +381,17 @@ function renderOrders() {
       return button;
     }),
   );
+}
+
+async function refreshOrders() {
+  await Promise.all(
+    [...orderList.querySelectorAll(".order-card")].map((card) =>
+      slideCardAway(card, orderList, ".order-card", 420, "down"),
+    ),
+  );
+  orders = Array.from({ length: 5 }, createOrder);
+  renderOrders();
+  animateCardLayout(orderList, ".order-card", new Map(), new Set(orders.map((order) => String(order.id))));
 }
 
 async function fillOrder(orderIndex) {
@@ -872,9 +887,6 @@ nextTurnButton.addEventListener("click", async () => {
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
   orders = orders.map((order) => (order.filled ? createOrder() : order));
-  const enteringOrderIds = new Set(
-    orders.map((order) => String(order.id)).filter((id) => !previousOrderPositions.has(id)),
-  );
   const enteringShopKeys = new Set(
     shopSlots
       .map((slot, index) => (slot.purchased ? String(index) : null))
@@ -888,6 +900,16 @@ nextTurnButton.addEventListener("click", async () => {
     shopWasRefreshed = true;
     await refreshShop();
   }
+  turnsUntilOrderRefresh -= 1;
+  let orderWasRefreshed = false;
+  if (turnsUntilOrderRefresh === 0) {
+    turnsUntilOrderRefresh = 15;
+    orderWasRefreshed = true;
+    await refreshOrders();
+  }
+  const enteringOrderIds = new Set(
+    orders.map((order) => String(order.id)).filter((id) => !previousOrderPositions.has(id)),
+  );
   advanceCropSpawnTimer();
   grid.querySelectorAll(".plot").forEach((plot) => {
     if (plot.dataset.crop) plot.dataset.turnWatered = "0";
@@ -900,10 +922,12 @@ nextTurnButton.addEventListener("click", async () => {
     cut: 1 + playerUpgrades[currentPlayer].cut,
   };
   renderTools();
-  renderOrders();
-  renderShop();
+  if (!orderWasRefreshed) renderOrders();
+  if (!shopWasRefreshed) renderShop();
   requestAnimationFrame(() => {
-    animateCardLayout(orderList, ".order-card", previousOrderPositions, enteringOrderIds);
+    if (!orderWasRefreshed) {
+      animateCardLayout(orderList, ".order-card", previousOrderPositions, enteringOrderIds);
+    }
     if (!shopWasRefreshed) {
       animateCardLayout(document.querySelector(".shop-list"), ".shop-card", previousShopPositions, enteringShopKeys);
     }
