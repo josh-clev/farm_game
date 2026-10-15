@@ -882,17 +882,20 @@ body {
 
 .weather-label {
   margin-top: -8%;
-  color: white;
-  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  color: #8edcff;
+  font-size: clamp(2rem, 5.6vw, 3.6rem);
   font-weight: 900;
   letter-spacing: 0.04em;
   line-height: 1;
-  text-transform: lowercase;
+  text-transform: uppercase;
   -webkit-text-stroke: clamp(1px, 0.3vw, 3px) #31533a;
   paint-order: stroke fill;
-  filter: drop-shadow(0 4px 0 rgb(32 67 40 / 40%)); }
+  filter: drop-shadow(0 4px 0 rgb(32 67 40 / 40%));
 }
 
+.weather-drought .weather-label {
+  color: #ffbd38;
+}
 .turn-announcement.player-two {
   color: #e34141;
 }
