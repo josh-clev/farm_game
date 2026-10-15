@@ -138,6 +138,15 @@ body {
   vertical-align: middle;
 }
 
+.renown-icon {
+  display: inline-block;
+  width: 1.35em;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  background: var(--renown-icon-image, none) center / contain no-repeat;
+  vertical-align: middle;
+}
+
 .resource-icon.coin-icon {
   width: clamp(20px, 5vw, 36px);
 }
@@ -249,7 +258,8 @@ body {
 }
 
 .shop-refresh-count,
-.order-refresh-count {
+.order-refresh-count,
+.order-round-count {
   display: inline-grid;
   place-items: center;
   width: 1.45em;
@@ -392,6 +402,15 @@ body {
 
 .order-reward {
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px 5px;
+}
+
+.order-reward-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
 }
 
 .confirmation-box {

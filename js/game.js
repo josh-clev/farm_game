@@ -52,11 +52,13 @@ const playerResources = {
   2: Object.fromEntries(crops.map((crop) => [crop.name, 0])),
 };
 const playerCoins = { 1: 50, 2: 50 };
+const playerRenown = { 1: 0, 2: 0 };
 let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
 let turnsUntilShopRefresh = 10;
 let turnsUntilOrderRefresh = 20;
+let currentRound = 1;
 const BASE_MAX_RESOURCES = 5;
 let pendingDiscardCount = 0;
 
@@ -64,6 +66,12 @@ function updateCoinDisplay(player) {
   const coinTotal = document.querySelector(`[data-player-coins="${player}"]`);
   coinTotal.textContent = String(playerCoins[player]);
   coinTotal.parentElement.setAttribute("aria-label", `Player ${player} coins: ${playerCoins[player]}`);
+}
+
+function updateRenownDisplay(player) {
+  const renownTotal = document.querySelector(`[data-player-renown="${player}"]`);
+  renownTotal.textContent = String(playerRenown[player]);
+  renownTotal.parentElement.setAttribute("aria-label", `Player ${player} renown: ${playerRenown[player]}`);
 }
 
 
@@ -135,6 +143,12 @@ function buildResourcePools() {
     coinItem.setAttribute("aria-label", `Player ${player} coins: ${playerCoins[player]}`);
     coinItem.innerHTML = `<span class="resource-icon coin-icon" aria-hidden="true"></span><strong class="resource-count" data-player-coins="${player}">${playerCoins[player]}</strong>`;
     resourceList.append(coinItem);
+
+    const renownItem = document.createElement("div");
+    renownItem.className = "resource-item renown-item";
+    renownItem.setAttribute("aria-label", `Player ${player} renown: ${playerRenown[player]}`);
+    renownItem.innerHTML = `<span class="resource-icon renown-icon" aria-hidden="true"></span><strong class="resource-count" data-player-renown="${player}">${playerRenown[player]}</strong>`;
+    resourceList.append(renownItem);
 
     crops.forEach((crop) => {
       const item = document.createElement("div");
@@ -320,7 +334,7 @@ async function animateHarvest(plot, cropName) {
   flyer.remove();
 }
 
-function createOrder() {
+function createOrder(rewardType = "coins") {
   const ingredientCount = Math.random() < 0.55 ? 1 : 2;
   const availableCrops = [...crops];
   const items = [];
@@ -338,7 +352,9 @@ function createOrder() {
   const resourceCount = items.reduce((total, item) => total + item.amount, 0);
   const rewardRate = resourceCount >= 5 ? 0.25 : resourceCount >= 4 ? 0.15 : resourceCount >= 3 ? 0.10 : 0;
   const reward = Math.ceil(fullReward * (1 + rewardRate));
-  return { id: nextOrderId++, items, reward, filled: false };
+  const coinReward = rewardType === "renown" ? 0 : rewardType === "mixed" ? Math.floor(reward / 2) : reward;
+  const renownReward = rewardType === "coins" ? 0 : Math.floor((reward - coinReward) / 5);
+  return { id: nextOrderId++, items, coinReward, renownReward, rewardType, filled: false };
 }
 
 function canFillOrder(order) {
@@ -348,6 +364,9 @@ function canFillOrder(order) {
 }
 
 function renderOrders() {
+  const roundCount = document.querySelector(".order-round-count");
+  roundCount.textContent = String(currentRound);
+  roundCount.setAttribute("aria-label", `Round ${currentRound}`);
   const refreshCount = document.querySelector(".order-refresh-count");
   refreshCount.textContent = String(turnsUntilOrderRefresh);
   refreshCount.setAttribute("aria-label", `${turnsUntilOrderRefresh} turns until order refresh`);
@@ -369,10 +388,14 @@ function renderOrders() {
           return `<span class="order-item"><span class="order-icon" data-crop="${cropSlug(crop.name)}" aria-hidden="true">${crop.icon}</span>${item.amount}</span>`;
         })
         .join("");
-      button.innerHTML = `<span class="order-items">${ingredients}</span><strong class="order-reward"><span class="coin-icon" aria-hidden="true"></span>${order.reward}</strong>`;
+      const rewards = [
+        order.coinReward > 0 ? `<span class="order-reward-part"><span class="coin-icon" aria-hidden="true"></span>${order.coinReward}</span>` : "",
+        order.renownReward > 0 ? `<span class="order-reward-part"><span class="renown-icon" aria-hidden="true"></span>${order.renownReward}</span>` : "",
+      ].join("");
+      button.innerHTML = `<span class="order-items">${ingredients}</span><strong class="order-reward">${rewards}</strong>`;
       button.setAttribute(
         "aria-label",
-        `${order.items.map((item) => `${item.amount} ${item.crop}`).join(" and ")}, reward ${order.reward} coins`,
+        `${order.items.map((item) => `${item.amount} ${item.crop}`).join(" and ")}, reward ${order.coinReward} coins and ${order.renownReward} renown`,
       );
       button.querySelectorAll(".order-icon").forEach((icon) => {
         loadGraphic(`${icon.dataset.crop}_icon`, (source) => {
@@ -392,7 +415,15 @@ async function refreshOrders() {
       slideCardAway(card, orderList, ".order-card", 420, "down"),
     ),
   );
-  orders = Array.from({ length: 5 }, createOrder);
+  currentRound += 1;
+  const rewardTypes = currentRound === 2
+    ? ["coins", "coins", "coins", "mixed", "renown"]
+    : ["coins", "coins", "renown", "mixed", "mixed"];
+  for (let index = rewardTypes.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [rewardTypes[index], rewardTypes[swapIndex]] = [rewardTypes[swapIndex], rewardTypes[index]];
+  }
+  orders = rewardTypes.map((type) => createOrder(type));
   renderOrders();
   animateCardLayout(orderList, ".order-card", new Map(), new Set(orders.map((order) => String(order.id))));
 }
@@ -422,12 +453,19 @@ async function fillOrder(orderIndex) {
     })));
   }
 
-  const rewardIcon = card.querySelector(".order-reward .coin-icon");
-  const coinTarget = document.querySelector(`[data-player-coins="${currentPlayer}"]`)
-    ?.parentElement.querySelector(".coin-icon");
-  await animateFlyingIcon(rewardIcon, coinTarget, coinTarget, 1120);
-  playerCoins[currentPlayer] += order.reward;
-  updateCoinDisplay(currentPlayer);
+  for (const [resource, amount, orderIconClass, playerAttr, poolIconClass, updateDisplay] of [
+    ["coins", order.coinReward, ".coin-icon", "data-player-coins", ".coin-icon", updateCoinDisplay],
+    ["renown", order.renownReward, ".renown-icon", "data-player-renown", ".renown-icon", updateRenownDisplay],
+  ]) {
+    if (!amount) continue;
+    const rewardIcon = card.querySelector(`.order-reward ${orderIconClass}`);
+    const target = document.querySelector(`[${playerAttr}="${currentPlayer}"]`)
+      ?.parentElement.querySelector(poolIconClass);
+    await animateFlyingIcon(rewardIcon, target, target, 1120);
+    if (resource === "coins") playerCoins[currentPlayer] += amount;
+    else playerRenown[currentPlayer] += amount;
+    updateDisplay(currentPlayer);
+  }
   order.filled = true;
   renderShop();
   if (orders.every((candidate) => candidate.filled)) {
@@ -470,6 +508,10 @@ loadGraphic("harvest_icon", (source) => {
 
 loadGraphic("coin_icon", (source) => {
   document.documentElement.style.setProperty("--coin-icon-image", `url("${source}")`);
+});
+
+loadGraphic("renown", (source) => {
+  document.documentElement.style.setProperty("--renown-icon-image", `url("${source}")`);
 });
 
 for (let index = 0; index < 25; index += 1) {
@@ -885,7 +927,11 @@ function handleOrderPress(event) {
   const orderIndex = Number(order.dataset.order);
   const orderData = orders[orderIndex];
   if (!orderData || !canFillOrder(orderData)) return;
-  openConfirmation(order, `Sell this order for ${orderData.reward} coins?`, () => fillOrder(orderIndex));
+  const rewardSummary = [
+    orderData.coinReward > 0 ? `${orderData.coinReward} coins` : "",
+    orderData.renownReward > 0 ? `${orderData.renownReward} renown` : "",
+  ].filter(Boolean).join(" and ");
+  openConfirmation(order, `Sell this order for ${rewardSummary}?`, () => fillOrder(orderIndex));
 }
 
 orderList.addEventListener("click", handleOrderPress);
