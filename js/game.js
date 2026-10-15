@@ -56,7 +56,7 @@ let orders = [];
 let spawnTimerPlot = null;
 let nextOrderId = 1;
 let turnsUntilShopRefresh = 10;
-let turnsUntilOrderRefresh = 15;
+let turnsUntilOrderRefresh = 20;
 const BASE_MAX_RESOURCES = 5;
 let pendingDiscardCount = 0;
 
@@ -930,7 +930,7 @@ nextTurnButton.addEventListener("click", async () => {
   turnsUntilOrderRefresh -= 1;
   let orderWasRefreshed = false;
   if (turnsUntilOrderRefresh === 0) {
-    turnsUntilOrderRefresh = 15;
+    turnsUntilOrderRefresh = 20;
     orderWasRefreshed = true;
     await refreshOrders();
   }
