@@ -536,16 +536,16 @@ async function fillOrder(orderIndex) {
     await Promise.all(Array.from({ length: item.amount }, (_, amount) => new Promise((resolve) => {
       window.setTimeout(async () => {
         await runTransactionAnimation(animateFlyingIcon(sourceIcon, targetIcon, sourceIcon, 1120));
-        playerResources[currentPlayer][item.crop] -= 1;
-        soldResources[currentPlayer][item.crop] += 1;
-        await updateResourcePool(currentPlayer, item.crop);
-        targetIcon.animate(
-          [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
-          { duration: 440, easing: "ease-out" },
-        );
         resolve();
       }, amount * 180);
     })));
+    playerResources[currentPlayer][item.crop] -= item.amount;
+    soldResources[currentPlayer][item.crop] += item.amount;
+    await updateResourcePool(currentPlayer, item.crop);
+    targetIcon.animate(
+      [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
+      { duration: 440, easing: "ease-out" },
+    );
   }
 
   for (const [resource, amount, orderIconClass, playerAttr, poolIconClass, updateDisplay] of [
