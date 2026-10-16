@@ -322,6 +322,10 @@ body {
   cursor: pointer;
 }
 
+.order-round-count.is-round-announcing {
+  border-color: #e34141;
+}
+
 .order-board h2 {
   position: relative;
 }

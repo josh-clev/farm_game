@@ -77,10 +77,14 @@ function showVictory(player) {
   victoryScreen.hidden = false;
 }
 
-playButton.addEventListener("click", () => {
+playButton.addEventListener("click", async () => {
   mainMenu.hidden = true;
   gameScene.hidden = false;
   turnAnnouncement.hidden = false;
+  if (turnsUntilOrderRefresh <= 5) {
+    await announceRound({ highlightCounter: true });
+  }
+  announceTurn();
 });
 returnMenuButton.addEventListener("click", () => {
   victoryScreen.hidden = true;
@@ -505,7 +509,7 @@ async function refreshOrders() {
   currentRound += 1;
   orders = roundRewardTypes(currentRound).map((type) => createOrder(type));
   renderOrders();
-  announceRound();
+  await announceRound();
   animateCardLayout(orderList, ".order-card", new Map(), new Set(orders.map((order) => String(order.id))));
 }
 
@@ -1065,18 +1069,33 @@ function announceTurn() {
   actionDock.classList.toggle("player-one-dock", currentPlayer === 1);
   actionDock.classList.toggle("player-two-dock", currentPlayer === 2);
 
-  turnAnnouncement.classList.remove("is-playing");
-  void turnAnnouncement.offsetWidth;
-  turnAnnouncement.classList.add("is-playing");
+  playAnnouncementAnimation();
 }
 
-function announceRound() {
-  turnAnnouncement.textContent = `ROUND ${currentRound}!`;
-  turnAnnouncement.classList.remove("player-one", "player-two");
-  turnAnnouncement.classList.add("round-announcement");
+function playAnnouncementAnimation() {
   turnAnnouncement.classList.remove("is-playing");
   void turnAnnouncement.offsetWidth;
-  turnAnnouncement.classList.add("is-playing");
+  return new Promise((resolve) => {
+    let timeoutId;
+    const finish = () => {
+      window.clearTimeout(timeoutId);
+      turnAnnouncement.removeEventListener("animationend", finish);
+      resolve();
+    };
+    turnAnnouncement.addEventListener("animationend", finish, { once: true });
+    turnAnnouncement.classList.add("is-playing");
+    timeoutId = window.setTimeout(finish, 1600);
+  });
+}
+
+function announceRound({ highlightCounter = false } = {}) {
+  turnAnnouncement.textContent = `Round ${currentRound}!`;
+  turnAnnouncement.classList.remove("player-one", "player-two");
+  turnAnnouncement.classList.add("round-announcement");
+  orderRoundCount.classList.toggle("is-round-announcing", highlightCounter);
+  return playAnnouncementAnimation().finally(() => {
+    orderRoundCount.classList.remove("is-round-announcing");
+  });
 }
 
 nextTurnButton.addEventListener("click", async () => {
