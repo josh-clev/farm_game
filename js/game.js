@@ -319,15 +319,15 @@ async function discardResource(item) {
   renderOrders();
 }
 
-async function animateHarvest(plot, cropName) {
+async function animateHarvest(plot, cropName, player) {
   const cropElement = plot.querySelector(".crop");
   if (!cropElement) return;
 
   const cropBounds = cropElement.getBoundingClientRect();
-  const targetPool = document.querySelector(`.resource-pool:nth-of-type(${currentPlayer === 1 ? 1 : 2})`);
+  const targetPool = document.querySelector(`.resource-pool:nth-of-type(${player === 1 ? 1 : 2})`);
   const targetBounds = targetPool.getBoundingClientRect();
   const targetIcon = document.querySelector(
-    `.resource-count[data-player="${currentPlayer}"][data-crop="${cropName}"]`,
+    `.resource-count[data-player="${player}"][data-crop="${cropName}"]`,
   )?.parentElement.querySelector(".resource-icon");
   const flyer = cropElement.cloneNode(true);
   flyer.className = "harvest-flyer";
@@ -846,6 +846,7 @@ function getRegularWaterActions() {
 function renderTools() {
   const bonusWater = Math.min(turnActions.water, playerUpgrades[currentPlayer].water);
   const regularWater = getRegularWaterActions();
+  const farmActionRunning = Boolean(grid.querySelector(".is-treating"));
   waterIcons.replaceChildren(
     ...Array.from({ length: regularWater }, () => makeToolIcon("water")),
     ...Array.from({ length: bonusWater }, () => makeToolIcon("water", true)),
@@ -862,10 +863,14 @@ function renderTools() {
   });
 
   const mustUseWater = regularWater > 0 && hasWaterablePlots();
-  nextTurnButton.disabled = mustUseWater || pendingDiscardCount > 0;
+  nextTurnButton.disabled = farmActionRunning || mustUseWater || pendingDiscardCount > 0;
   nextTurnButton.setAttribute(
     "aria-label",
-    mustUseWater ? `Next Turn: use all ${regularWater} regular water actions first` : "Next Turn",
+    farmActionRunning
+      ? "Next Turn: wait for the current action to finish"
+      : mustUseWater
+      ? `Next Turn: use all ${regularWater} regular water actions first`
+      : "Next Turn",
   );
 
   grid.querySelectorAll(".plot[data-crop]").forEach(updateCropProgress);
@@ -943,19 +948,20 @@ async function useTool(plot) {
     await animateTreatment(plot, "water");
   } else if (selectedTool === "cut") {
     const harvestedCrop = plot.dataset.crop;
+    const harvestingPlayer = currentPlayer;
     if (plot.classList.contains("is-harvesting")) return;
     plot.classList.add("is-harvesting");
     turnActions.cut -= 1;
     selectedTool = null;
     renderTools();
-    await animateHarvest(plot, harvestedCrop);
+    await animateHarvest(plot, harvestedCrop, harvestingPlayer);
     plot.querySelector(".crop-progress")?.remove();
     delete plot.dataset.crop;
     delete plot.dataset.water;
     delete plot.dataset.waterNeeded;
     plot.classList.remove("fully-grown");
-    playerResources[currentPlayer][harvestedCrop] += 1;
-    await updateResourcePool(currentPlayer, harvestedCrop);
+    playerResources[harvestingPlayer][harvestedCrop] += 1;
+    await updateResourcePool(harvestingPlayer, harvestedCrop);
     beginDiscardSelection();
     renderTools();
     renderOrders();
@@ -977,6 +983,7 @@ async function useTool(plot) {
   renderTools();
   } finally {
     plot.classList.remove("is-treating");
+    renderTools();
   }
 }
 
@@ -1078,7 +1085,7 @@ function announceRound() {
 }
 
 nextTurnButton.addEventListener("click", async () => {
-  if (isActionLocked() || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
+  if (isActionLocked() || grid.querySelector(".is-treating") || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
