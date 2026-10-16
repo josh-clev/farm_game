@@ -607,7 +607,7 @@ loadGraphic("renown", (source) => {
   document.documentElement.style.setProperty("--renown-icon-image", `url("${source}")`);
 });
 
-for (let index = 0; index < 25; index += 1) {
+for (let index = 0; index < 20; index += 1) {
   const plot = document.createElement("button");
   const row = Math.floor(index / 5);
   const column = index % 5;
@@ -616,10 +616,10 @@ for (let index = 0; index < 25; index += 1) {
   plot.dataset.plot = String(index);
   plot.setAttribute("aria-label", `Farm plot ${index + 1}`);
 
-  if (row === 4 && column === 0) {
+  if (row === 3 && column === 0) {
     plot.classList.add("player-one-plot");
     plot.setAttribute("aria-label", `Farm plot ${index + 1}, Player 1 territory`);
-  } else if (row === 4 && column === 4) {
+  } else if (row === 3 && column === 4) {
     plot.classList.add("player-two-plot");
     plot.setAttribute("aria-label", `Farm plot ${index + 1}, Player 2 territory`);
   }
