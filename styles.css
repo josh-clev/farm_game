@@ -260,9 +260,9 @@ body {
 .farm-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(5, 1fr);
+  grid-template-rows: repeat(4, 1fr);
   gap: clamp(1px, 0.3vw, 3px);
-  aspect-ratio: 1;
+  aspect-ratio: 5 / 4;
   width: auto;
   height: 100%;
   max-width: 100%;
@@ -1134,7 +1134,7 @@ body {
   }
 
   .farm-grid {
-    width: min(100%, 68vw, 48vh);
+    width: min(100%, 86vw, 58vh);
     height: auto;
   }
 
@@ -1528,7 +1528,7 @@ body {
     height: auto;
     max-height: 100%;
     align-self: center;
-    grid-template-rows: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
   }
 
   .spawn-timer {
