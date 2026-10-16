@@ -1545,12 +1545,12 @@ body {
   }
 
   .center-stack {
-    grid-template-rows: 58px minmax(0, 1fr) 64px;
+    grid-template-rows: 48px minmax(0, 1fr) 54px;
     gap: 2px;
   }
 
   .farm-grid {
-    width: min(100%, calc(100dvh - 132px - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))));
+    width: min(100%, calc(100dvh - 104px - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))));
     height: auto;
     max-height: 100%;
     align-self: center;
