@@ -1590,7 +1590,8 @@ body {
   }
 
   .shop-card {
-    grid-template-columns: 28px minmax(0, 1fr);
+    flex: 0 0 clamp(74px, 8vw, 92px);
+    grid-template-columns: 24px minmax(0, 1fr);
     min-height: 38px;
     padding: 2px 4px;
   }
