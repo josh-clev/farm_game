@@ -1081,6 +1081,7 @@ function announceRound() {
 
 nextTurnButton.addEventListener("click", async () => {
   if (isActionLocked() || grid.querySelector(".is-treating") || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
+  nextTurnButton.disabled = true;
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
