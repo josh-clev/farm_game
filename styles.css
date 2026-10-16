@@ -661,7 +661,10 @@ body {
   z-index: 3;
   display: grid;
   width: 58%;
+  height: auto;
   aspect-ratio: 1;
+  align-self: center;
+  justify-self: center;
   place-items: center;
   border: clamp(2px, 0.45vw, 4px) solid #fff4a3;
   border-radius: 50%;
@@ -1533,8 +1536,14 @@ body {
     background-position: center top;
   }
 
+  .board-layout {
+    grid-template-columns: minmax(100px, 17%) minmax(0, 1fr) minmax(100px, 17%);
+  }
+
   .resource-pool {
+    align-self: start;
     margin: 4px;
+    margin-top: 50px;
     padding: 5px;
   }
 
@@ -1552,8 +1561,22 @@ body {
   }
 
   .center-stack {
-    grid-template-rows: 56px minmax(0, 1fr) 72px;
+    grid-template-rows: 58px minmax(0, 1fr) 64px;
     gap: 2px;
+  }
+
+  .farm-grid {
+    width: min(100%, calc(100dvh - 132px - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))));
+    height: auto;
+    max-height: 100%;
+    align-self: center;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+
+  .spawn-timer {
+    width: 62%;
+    max-width: 32px;
+    font-size: clamp(9px, 2.5vh, 16px);
   }
 
   .shop-board h2,
@@ -1576,8 +1599,15 @@ body {
     margin-bottom: 3px;
   }
 
+  .order-list {
+    width: min(100%, 470px);
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
   .order-card {
-    height: 48px;
+    flex: 0 0 calc((100% - 16px) / 5);
+    height: 40px;
     min-height: 0;
     gap: 0;
     padding: 2px 4px;
@@ -1591,10 +1621,51 @@ body {
 
   .order-item,
   .order-reward {
-    font-size: clamp(0.65rem, 1.7vw, 0.9rem);
+    font-size: clamp(0.6rem, 1.5vw, 0.78rem);
   }
 
   .order-icon {
-    width: clamp(14px, 2vw, 18px);
+    width: clamp(12px, 1.8vw, 16px);
+  }
+
+  .action-dock,
+  .action-dock.player-one-dock,
+  .action-dock.player-two-dock {
+    gap: 4px;
+    width: 96px;
+  }
+
+  .tool-tray {
+    gap: 4px;
+  }
+
+  .tool-button {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 1px 3px 3px;
+    border-width: 2px;
+    border-radius: 12px;
+  }
+
+  .tool-name {
+    font-size: 10px;
+  }
+
+  .tool-icons {
+    min-height: 18px;
+  }
+
+  .tool-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .next-turn {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 4px;
+    font-size: 11px;
   }
 }
