@@ -3,11 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="screen-orientation" content="landscape" />
     <meta name="theme-color" content="#74bf4b" />
     <title>Farm Game</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="app-shell">
     <section class="screen-overlay main-menu" aria-label="Main menu">
       <h1>Farm Game</h1>
       <button class="menu-button play-button" type="button">Play</button>
@@ -76,5 +78,11 @@
     <script src="js/farm.js"></script>
     <script src="js/turns.js"></script>
     <script src="js/game.js"></script>
+    <script>
+      if (screen.orientation?.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+    </script>
+    </div>
   </body>
 </html>

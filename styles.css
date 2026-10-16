@@ -17,6 +17,24 @@ body {
   overscroll-behavior: none;
 }
 
+.app-shell {
+  width: 100%;
+  min-height: 100%;
+}
+
+@media (orientation: portrait) {
+  .app-shell {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vh;
+    height: 100vw;
+    min-height: 0;
+    transform: rotate(90deg) translateY(-100%);
+    transform-origin: top left;
+  }
+}
+
 .screen-overlay {
   position: fixed;
   z-index: 30;
