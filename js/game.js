@@ -1,7 +1,6 @@
 const grid = document.querySelector(".farm-grid");
 const nextTurnButton = document.querySelector(".next-turn");
 const turnAnnouncement = document.querySelector(".turn-announcement");
-const turnBadge = document.querySelector(".turn-badge");
 const toolButtons = [...document.querySelectorAll(".tool-button")];
 const waterIcons = document.querySelector(".water-icons");
 const cutIcons = document.querySelector(".cut-icons");
@@ -1064,9 +1063,6 @@ function announceTurn() {
   turnAnnouncement.classList.remove("round-announcement");
   turnAnnouncement.classList.toggle("player-one", currentPlayer === 1);
   turnAnnouncement.classList.toggle("player-two", currentPlayer === 2);
-  turnBadge.classList.toggle("player-one-badge", currentPlayer === 1);
-  turnBadge.classList.toggle("player-two-badge", currentPlayer === 2);
-  turnBadge.setAttribute("aria-label", `${playerName}'s turn`);
   actionDock.classList.toggle("player-one-dock", currentPlayer === 1);
   actionDock.classList.toggle("player-two-dock", currentPlayer === 2);
 
