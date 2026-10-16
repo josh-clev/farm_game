@@ -516,6 +516,15 @@ async function fillOrder(orderIndex) {
   const card = orderList.querySelector(`[data-order="${orderIndex}"]`);
   if (!card) return;
 
+  const runTransactionAnimation = async (animation) => {
+    try {
+      await animation;
+    } catch (error) {
+      // Animations are cosmetic and must never leave a sale partially applied.
+      if (error?.name !== "AbortError") console.error(error);
+    }
+  };
+
   for (const item of order.items) {
     const sourceIcon = document.querySelector(
       `.resource-count[data-player="${currentPlayer}"][data-crop="${item.crop}"]`,
@@ -523,7 +532,7 @@ async function fillOrder(orderIndex) {
     const targetIcon = card.querySelector(`.order-icon[data-crop="${cropSlug(item.crop)}"]`);
     await Promise.all(Array.from({ length: item.amount }, (_, amount) => new Promise((resolve) => {
       window.setTimeout(async () => {
-        await animateFlyingIcon(sourceIcon, targetIcon, sourceIcon, 1120);
+        await runTransactionAnimation(animateFlyingIcon(sourceIcon, targetIcon, sourceIcon, 1120));
         playerResources[currentPlayer][item.crop] -= 1;
         soldResources[currentPlayer][item.crop] += 1;
         await updateResourcePool(currentPlayer, item.crop);
@@ -544,7 +553,7 @@ async function fillOrder(orderIndex) {
     const rewardIcon = card.querySelector(`.order-reward ${orderIconClass}`);
     const target = document.querySelector(`[${playerAttr}="${currentPlayer}"]`)
       ?.parentElement.querySelector(poolIconClass);
-    await animateFlyingIcon(rewardIcon, target, target, 1120);
+    await runTransactionAnimation(animateFlyingIcon(rewardIcon, target, target, 1120));
     if (resource === "coins") playerCoins[currentPlayer] += amount;
     else playerRenown[currentPlayer] += amount;
     if (resource === "coins") earnedCoins[currentPlayer] += amount;
