@@ -1495,3 +1495,34 @@ body {
     font-size: 0.78rem;
   }
 }
+
+/* Keep the order rail compact so the field remains the visual focus. */
+.order-list {
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.order-list::-webkit-scrollbar {
+  display: none;
+}
+
+.order-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.farm-grid {
+  transform: none;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .order-list {
+    width: 100%;
+  }
+
+  .order-card {
+    flex: 0 0 min(30vw, 118px);
+  }
+}
