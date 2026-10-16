@@ -671,13 +671,13 @@ function canUpgradePlot(plot) {
 
 function plantCrop(plot, crop) {
   const cropIcon = document.createElement("span");
-  cropIcon.className = "crop";
-  cropIcon.textContent = crop.icon;
+  cropIcon.className = "crop is-loading";
   cropIcon.setAttribute("aria-hidden", "true");
 
   loadGraphic(crop.asset, (source) => {
-    cropIcon.textContent = "";
     cropIcon.style.backgroundImage = `url("${source}")`;
+    cropIcon.classList.remove("is-loading");
+    animateCropAppearance(cropIcon);
   });
 
   plot.dataset.crop = crop.name;
@@ -692,7 +692,6 @@ function plantCrop(plot, crop) {
   plot.append(progress);
   plot.setAttribute("aria-label", `${plot.getAttribute("aria-label")}, growing ${crop.name}`);
   updateCropProgress(plot);
-  animateCropAppearance(cropIcon);
 }
 
 function getNextCropSpawnTurns() {

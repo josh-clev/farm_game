@@ -568,6 +568,10 @@ body {
   transform: translateY(-2%);
 }
 
+.crop.is-loading {
+  visibility: hidden;
+}
+
 .crop.is-spawning {
   animation: crop-appear 440ms cubic-bezier(0.2, 0.95, 0.35, 1.2) both;
 }
