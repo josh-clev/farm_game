@@ -2,11 +2,11 @@
   "use strict";
 
   const crops = [
-    { name: "Wheat", icon: "🌾", asset: "wheat_crop", waterNeeded: 4, rarity: 1, marketValue: 11, spawnWeight: 48 },
-    { name: "Corn", icon: "🌽", asset: "corn_crop", waterNeeded: 5, rarity: 2, marketValue: 16, spawnWeight: 28 },
-    { name: "Cotton", icon: "☁️", asset: "cotton_crop", waterNeeded: 6, rarity: 3, marketValue: 21, spawnWeight: 14 },
-    { name: "Tomato", icon: "🍅", asset: "tomato_crop", waterNeeded: 7, rarity: 4, marketValue: 26, spawnWeight: 7 },
-    { name: "Sugarcane", icon: "🎋", asset: "sugarcane_crop", waterNeeded: 8, rarity: 5, marketValue: 31, spawnWeight: 3 },
+    { name: "Wheat", icon: "🌾", asset: "wheat_crop", waterNeeded: 4, rarity: 1, marketValue: 11, spawnWeight: 28 },
+    { name: "Corn", icon: "🌽", asset: "corn_crop", waterNeeded: 5, rarity: 2, marketValue: 15, spawnWeight: 24 },
+    { name: "Cotton", icon: "☁️", asset: "cotton_crop", waterNeeded: 6, rarity: 3, marketValue: 19, spawnWeight: 20 },
+    { name: "Tomato", icon: "🍅", asset: "tomato_crop", waterNeeded: 7, rarity: 4, marketValue: 23, spawnWeight: 16 },
+    { name: "Sugarcane", icon: "🎋", asset: "sugarcane_crop", waterNeeded: 8, rarity: 5, marketValue: 27, spawnWeight: 12 },
   ];
 
   const seedItems = Object.fromEntries(crops.map((crop) => {
