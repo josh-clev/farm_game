@@ -1496,11 +1496,12 @@ body {
   }
 }
 
-/* Keep the order rail compact so the field remains the visual focus. */
+/* Keep all orders on one rail without letting them squeeze the field. */
 .order-list {
   flex-wrap: nowrap;
   max-width: 100%;
   overflow-x: auto;
+  justify-content: safe center;
   scrollbar-width: none;
 }
 
@@ -1509,7 +1510,7 @@ body {
 }
 
 .order-card {
-  flex: 1 1 0;
+  flex: 0 0 clamp(80px, calc((100% - 32px) / 5), 120px);
   min-width: 0;
 }
 
@@ -1524,5 +1525,76 @@ body {
 
   .order-card {
     flex: 0 0 min(30vw, 118px);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 650px) {
+  .game {
+    background-position: center top;
+  }
+
+  .resource-pool {
+    margin: 4px;
+    padding: 5px;
+  }
+
+  .resource-list {
+    gap: 2px;
+  }
+
+  .resource-icon,
+  .resource-icon.coin-icon {
+    width: clamp(18px, 2.6vw, 24px);
+  }
+
+  .resource-count {
+    font-size: 0.8rem;
+  }
+
+  .center-stack {
+    grid-template-rows: 56px minmax(0, 1fr) 72px;
+    gap: 2px;
+  }
+
+  .shop-board h2,
+  .order-board h2 {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .shop-board h2 {
+    margin-top: 3px;
+  }
+
+  .shop-card {
+    grid-template-columns: 28px minmax(0, 1fr);
+    min-height: 38px;
+    padding: 2px 4px;
+  }
+
+  .order-board h2 {
+    margin-bottom: 3px;
+  }
+
+  .order-card {
+    height: 48px;
+    min-height: 0;
+    gap: 0;
+    padding: 2px 4px;
+    border-width: 2px;
+  }
+
+  .order-items {
+    flex-wrap: nowrap;
+    gap: 2px 3px;
+  }
+
+  .order-item,
+  .order-reward {
+    font-size: clamp(0.65rem, 1.7vw, 0.9rem);
+  }
+
+  .order-icon {
+    width: clamp(14px, 2vw, 18px);
   }
 }
