@@ -81,9 +81,7 @@ playButton.addEventListener("click", async () => {
   mainMenu.hidden = true;
   gameScene.hidden = false;
   turnAnnouncement.hidden = false;
-  if (turnsUntilOrderRefresh <= 5) {
-    await announceRound({ highlightCounter: true });
-  }
+  await announceRound();
   announceTurn();
 });
 returnMenuButton.addEventListener("click", () => {
@@ -413,6 +411,7 @@ function renderOrders() {
   const refreshCount = document.querySelector(".order-refresh-count");
   refreshCount.textContent = String(turnsUntilOrderRefresh);
   refreshCount.setAttribute("aria-label", `${turnsUntilOrderRefresh} turns until order refresh`);
+  refreshCount.classList.toggle("is-warning", turnsUntilOrderRefresh <= 5);
   orderList.replaceChildren(
     ...orders.flatMap((order, orderIndex) => {
       if (order.filled) return [];
@@ -1088,14 +1087,11 @@ function playAnnouncementAnimation() {
   });
 }
 
-function announceRound({ highlightCounter = false } = {}) {
+function announceRound() {
   turnAnnouncement.textContent = `Round ${currentRound}!`;
   turnAnnouncement.classList.remove("player-one", "player-two");
   turnAnnouncement.classList.add("round-announcement");
-  orderRoundCount.classList.toggle("is-round-announcing", highlightCounter);
-  return playAnnouncementAnimation().finally(() => {
-    orderRoundCount.classList.remove("is-round-announcing");
-  });
+  return playAnnouncementAnimation();
 }
 
 nextTurnButton.addEventListener("click", async () => {

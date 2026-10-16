@@ -322,7 +322,7 @@ body {
   cursor: pointer;
 }
 
-.order-round-count.is-round-announcing {
+.order-refresh-count.is-warning {
   border-color: #e34141;
 }
 
