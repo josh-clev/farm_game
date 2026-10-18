@@ -1307,6 +1307,12 @@ body {
     max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
 }
 
+@media (orientation: portrait) {
+  .app-shell .game {
+    height: 100%;
+  }
+}
+
 .board-layout {
   grid-template-columns: minmax(76px, 0.55fr) minmax(0, 2.5fr) minmax(76px, 0.55fr);
   height: 100%;
