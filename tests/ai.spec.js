@@ -78,3 +78,79 @@ test('AI waters a crop using the shared farm rules', async ({ page }) => {
   expect(result.player).toBe(1);
   expect(result.inert).toBe(false);
 });
+
+test('AI leaves a neutral crop more than two water away when it can', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Play against AI' }).click();
+  const result = await page.evaluate(async () => {
+    const [risky, safe] = [...grid.querySelectorAll('.plot[data-crop]')]
+      .filter((plot) => getPlotOwner(plot) === null).slice(0, 2);
+    grid.querySelectorAll('.plot[data-crop]').forEach((plot) => {
+      plot.dataset.water = plot.dataset.waterNeeded;
+      plot.dataset.turnWatered = '0';
+    });
+    risky.dataset.waterNeeded = '4';
+    risky.dataset.water = '1'; // One water would leave two, with no action to finish it.
+    safe.dataset.waterNeeded = '4';
+    safe.dataset.water = '0'; // One water leaves three.
+    currentPlayer = 2;
+    FarmAi.syncLock();
+    turnActions = { water: 1, cut: 0 };
+    shopSlots.forEach((slot) => { slot.purchased = true; });
+    applyWeatherEvent = async () => {};
+    await FarmAi.playTurn();
+    return { riskyWater: Number(risky.dataset.water), safeWater: Number(safe.dataset.water) };
+  });
+  expect(result).toEqual({ riskyWater: 1, safeWater: 1 });
+});
+
+test('AI finishes a neutral crop when this turn has enough water', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Play against AI' }).click();
+  const result = await page.evaluate(async () => {
+    const target = [...grid.querySelectorAll('.plot[data-crop]')]
+      .find((plot) => getPlotOwner(plot) === null);
+    grid.querySelectorAll('.plot[data-crop]').forEach((plot) => {
+      plot.dataset.water = plot.dataset.waterNeeded;
+      plot.dataset.turnWatered = '0';
+    });
+    target.dataset.waterNeeded = '4';
+    target.dataset.water = '2';
+    currentPlayer = 2;
+    FarmAi.syncLock();
+    turnActions = { water: 2, cut: 0 };
+    shopSlots.forEach((slot) => { slot.purchased = true; });
+    applyWeatherEvent = async () => {};
+    await FarmAi.playTurn();
+    return Number(target.dataset.water);
+  });
+  expect(result).toBe(4);
+});
+
+test('AI avoids exposing a neutral crop with fertiliser', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Play against AI' }).click();
+  const result = await page.evaluate(async () => {
+    const [risky, safe] = [...grid.querySelectorAll('.plot[data-crop]')]
+      .filter((plot) => getPlotOwner(plot) === null).slice(0, 2);
+    grid.querySelectorAll('.plot[data-crop]').forEach((plot) => {
+      plot.dataset.water = plot.dataset.waterNeeded;
+      plot.dataset.turnWatered = '0';
+    });
+    risky.dataset.waterNeeded = '4';
+    risky.dataset.water = '0'; // Fertiliser would leave one water remaining.
+    safe.dataset.waterNeeded = '3';
+    safe.dataset.water = '0'; // Fertiliser finishes it.
+    currentPlayer = 2;
+    FarmAi.syncLock();
+    turnActions = { water: 0, cut: 0 };
+    shopSlots.forEach((slot) => { slot.purchased = true; });
+    shopSlots[0].itemKey = 'fertiliser';
+    shopSlots[0].purchased = false;
+    renderShop();
+    applyWeatherEvent = async () => {};
+    await FarmAi.playTurn();
+    return { riskyWater: Number(risky.dataset.water), safeWater: Number(safe.dataset.water) };
+  });
+  expect(result).toEqual({ riskyWater: 0, safeWater: 3 });
+});

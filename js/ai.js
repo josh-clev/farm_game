@@ -105,8 +105,23 @@
   }
 
   function bestPlot(tool) {
-    const candidates = [...grid.querySelectorAll(".plot")].filter((plot) => canUseTool(plot, tool));
-    candidates.sort((a, b) => {
+    const candidates = [...grid.querySelectorAll(".plot")].filter((plot) =>
+      canUseTool(plot, tool) && (tool !== "fertiliser" || Number(plot.dataset.water) < Number(plot.dataset.waterNeeded)));
+    const exposesCrop = (plot) => {
+      if (getPlotOwner(plot) !== null) return false;
+      const remainingAfterWater = Number(plot.dataset.waterNeeded) - Number(plot.dataset.water)
+        - (tool === "fertiliser" ? 3 : 1);
+      if (remainingAfterWater <= 0 || remainingAfterWater > 2) return false;
+      const waterLeftThisTurn = tool === "fertiliser" ? 0 : Math.min(
+        turnActions.water - 1,
+        2 - Number(plot.dataset.turnWatered || 0) - 1,
+      );
+      return waterLeftThisTurn < remainingAfterWater;
+    };
+    const safeCandidates = tool === "water" || tool === "fertiliser"
+      ? candidates.filter((plot) => !exposesCrop(plot)) : candidates;
+    const choices = safeCandidates.length ? safeCandidates : candidates;
+    choices.sort((a, b) => {
       const rank = (plot) => {
         const crop = crops.find((entry) => entry.name === plot.dataset.crop);
         const need = orderDemand(plot.dataset.crop);
@@ -114,11 +129,15 @@
         const prior = tool === "cut"
           ? 35 + (crop?.marketValue || 0) + need * 12
           : 20 + (crop?.marketValue || 0) / 3 + need * 7 - remaining * 2;
-        return value(actionKeys(tool === "cut" ? "harvest" : "water", plot.dataset.crop), prior);
+        const finishingStartedCrop = tool === "water" && remaining === 1
+          && Number(plot.dataset.turnWatered || 0) > 0;
+        const action = tool === "cut" ? "harvest" : tool;
+        return value(actionKeys(action, plot.dataset.crop), prior)
+          + (finishingStartedCrop ? 1000 : 0);
       };
       return rank(b) - rank(a);
     });
-    return candidates[0];
+    return choices[0];
   }
 
   async function playTurn() {
@@ -173,7 +192,7 @@
         const plot = tool?.startsWith("seed:")
           ? [...grid.querySelectorAll(".plot")].find((candidate) => canPlantSeed(candidate, crops.find((crop) => crop.name === item.seedCrop)))
           : tool === "fertiliser"
-          ? bestPlot("water")
+          ? bestPlot("fertiliser")
           : null;
         if (plot && tool) {
           selectedTool = tool;
