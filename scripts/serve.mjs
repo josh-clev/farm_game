@@ -29,7 +29,7 @@ createServer(async (request, response) => {
       let size = 0;
       for await (const chunk of request) {
         size += chunk.length;
-        if (size > 100_000) {
+        if (size > 1_000_000) {
           response.writeHead(413).end('Model too large');
           return;
         }
@@ -38,15 +38,34 @@ createServer(async (request, response) => {
       const model = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       const validEntry = (entry) => Number.isInteger(entry?.count) && entry.count >= 0
         && Number.isFinite(entry?.sum);
-      if (model?.version !== 1 || model.horizon !== 20 || !validEntry(model.total)
-        || !model.actions || typeof model.actions !== 'object' || Array.isArray(model.actions)
-        || Object.keys(model.actions).length > 2000
-        || !Object.entries(model.actions).every(([key, entry]) => key.length <= 120 && validEntry(entry))) {
+      const validStats = (stats) => validEntry(stats?.total) && stats.actions
+        && typeof stats.actions === 'object' && !Array.isArray(stats.actions)
+        && Object.keys(stats.actions).length <= 2000
+        && Object.entries(stats.actions).every(([key, entry]) => key.length <= 120
+          && !['__proto__', 'constructor', 'prototype'].includes(key) && validEntry(entry));
+      const validModel = (candidate) => candidate?.version === 2 && candidate.horizon === 20
+        && candidate.sources && typeof candidate.sources === 'object' && !Array.isArray(candidate.sources)
+        && Object.keys(candidate.sources).length <= 256
+        && Object.entries(candidate.sources).every(([id, source]) => /^[a-zA-Z0-9_-]{1,100}$/.test(id)
+          && !['__proto__', 'constructor', 'prototype'].includes(id)
+          && validStats(source?.human) && validStats(source?.ai));
+      if (!validModel(model)) {
         response.writeHead(400).end('Invalid model');
         return;
       }
-      await writeFile(resolve(root, 'js/ai-model.js'),
-        `// Play-test model. Each action stores 20-turn coin + renown outcomes.\nwindow.FarmAiModel = ${JSON.stringify(model, null, 2)};\n`);
+      const modelPath = resolve(root, 'js/ai-model.js');
+      const currentFile = await readFile(modelPath, 'utf8');
+      const match = currentFile.match(/window\.FarmAiModel\s*=\s*([\s\S]*);\s*$/);
+      const current = match ? JSON.parse(match[1]) : null;
+      if (validModel(current)) {
+        for (const [id, source] of Object.entries(current.sources)) {
+          const incoming = model.sources[id];
+          const count = (entry) => entry.human.total.count + entry.ai.total.count;
+          if (!incoming || count(source) > count(incoming)) model.sources[id] = source;
+        }
+      }
+      await writeFile(modelPath,
+        `// Play-test model. Sources merge without counting repeat exports twice.\nwindow.FarmAiModel = ${JSON.stringify(model, null, 2)};\n`);
       response.writeHead(204).end();
       return;
     }
