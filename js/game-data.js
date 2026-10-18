@@ -29,5 +29,5 @@
     ...seedItems,
   };
 
-  window.FarmGameData = { shopItems, crops };
+  window.FarmGameData = { shopItems, crops, aiTrainingEnabled: true };
 }());

@@ -1,18 +1,22 @@
 (function defineFarmAi() {
   "use strict";
 
-  const training = location.protocol === "http:"
+  const trainingAllowed = window.FarmGameData.aiTrainingEnabled;
+  const legacyTraining = trainingAllowed && location.protocol === "http:"
     && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
     && new URLSearchParams(location.search).has("train-ai");
   const storageKey = "farm-game-ai-training-v1";
   const bundled = window.FarmAiModel;
   let model = bundled;
-  if (training) {
+  let training = legacyTraining;
+  function savedModel() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
-      if (saved?.version === 1 && saved.horizon === 20 && saved.actions) model = saved;
+      if (saved?.version === 1 && saved.horizon === 20 && saved.actions) return saved;
     } catch (_) { /* Private browsing may disable storage. */ }
+    return null;
   }
+  if (training) model = savedModel() || bundled;
   let enabled = false;
   let turnNumber = 0;
   let previousAction = null;
@@ -59,11 +63,13 @@
     }
     if (changed) {
       try { localStorage.setItem(storageKey, JSON.stringify(model)); } catch (_) { /* Export still works. */ }
-      fetch("/__ai-training", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(model),
-      }).catch(() => { /* The static test server has no training endpoint. */ });
+      if (location.protocol === "http:" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+        fetch("/__ai-training", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(model),
+        }).catch(() => { /* The static test server has no training endpoint. */ });
+      }
     }
   }
 
@@ -83,9 +89,15 @@
     gameScene.inert = enabled && currentPlayer === 2;
   }
 
-  function start() {
+  function start(trainAi = false) {
     enabled = true;
+    training = trainingAllowed && (trainAi || legacyTraining);
+    if (training) model = savedModel() || bundled;
     syncLock();
+  }
+
+  function hasTrainingData() {
+    return (savedModel()?.total.count || 0) > 0;
   }
 
   async function buy(slotIndex) {
@@ -209,7 +221,7 @@
   }
 
   function exportModel() {
-    const source = `// Play-test model. Each action stores 20-turn coin + renown outcomes.\nwindow.FarmAiModel = ${JSON.stringify(model, null, 2)};\n`;
+    const source = `// Play-test model. Each action stores 20-turn coin + renown outcomes.\nwindow.FarmAiModel = ${JSON.stringify(training ? model : savedModel() || model, null, 2)};\n`;
     const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
     const link = document.createElement("a");
     link.href = url;
@@ -218,5 +230,5 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  window.FarmAi = { training, start, syncLock, finishTurn, playTurn, record, itemKey, actionKeys, exportModel };
+  window.FarmAi = { get training() { return training; }, start, hasTrainingData, syncLock, finishTurn, playTurn, record, itemKey, actionKeys, exportModel };
 }());

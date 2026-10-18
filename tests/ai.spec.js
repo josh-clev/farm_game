@@ -1,5 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { readFileSync } = require('node:fs');
+const { resolve } = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 for (const viewport of [
   { name: 'iphone', width: 390, height: 844 },
@@ -30,9 +32,25 @@ for (const viewport of [
   });
 }
 
+for (const viewport of [
+  { name: 'iphone', width: 390, height: 844 },
+  { name: 'ipad', width: 820, height: 1180 },
+]) {
+  test(`${viewport.name} training controls are accessible in the game UI`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto('/');
+    const trainAi = page.getByRole('button', { name: 'Train AI' });
+    await expect(trainAi).toBeInViewport();
+    await page.screenshot({ path: `test-results/responsive/${viewport.name}-training-menu.png` });
+    await trainAi.click();
+    await expect(page.locator('.export-ai-game-button')).toBeInViewport();
+    await page.screenshot({ path: `test-results/responsive/${viewport.name}-training-game.png` });
+  });
+}
+
 test('training credits actions after 20 total turns and exports a model', async ({ page }) => {
-  await page.goto('/?train-ai');
-  await page.getByRole('button', { name: 'Play against AI' }).click();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Train AI' }).click();
   await page.evaluate(() => {
     FarmAi.record([FarmAi.itemKey({ tool: 'future-tool' })]);
     for (let turn = 0; turn < 19; turn += 1) FarmAi.finishTurn();
@@ -46,6 +64,11 @@ test('training credits actions after 20 total turns and exports a model', async 
   const model = await page.evaluate(() => JSON.parse(localStorage.getItem('farm-game-ai-training-v1')));
   expect(model.horizon).toBe(20);
   expect(model.actions['shop:tool:future-tool']).toEqual({ count: 1, sum: 40 });
+  const [inGameDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('.export-ai-game-button').click(),
+  ]);
+  expect(inGameDownload.suggestedFilename()).toBe('ai-model.js');
   await page.reload();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -53,6 +76,19 @@ test('training credits actions after 20 total turns and exports a model', async 
   ]);
   expect(download.suggestedFilename()).toBe('ai-model.js');
   expect(readFileSync(await download.path(), 'utf8')).toContain('shop:tool:future-tool');
+});
+
+test('training can start directly from the index file', async ({ page }) => {
+  await page.goto(pathToFileURL(resolve(__dirname, '../index.html')).href);
+  await page.getByRole('button', { name: 'Train AI' }).click();
+  expect(await page.evaluate(() => FarmAi.training)).toBe(true);
+  await expect(page.locator('.export-ai-game-button')).toBeVisible();
+  const persisted = await page.evaluate(() => {
+    FarmAi.record(['water']);
+    for (let turn = 0; turn < 20; turn += 1) FarmAi.finishTurn();
+    try { return Boolean(localStorage.getItem('farm-game-ai-training-v1')); } catch (_) { return false; }
+  });
+  expect(persisted).toBe(true);
 });
 
 test('AI waters a crop using the shared farm rules', async ({ page }) => {

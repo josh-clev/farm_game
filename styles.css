@@ -58,6 +58,10 @@ body {
   display: none;
 }
 
+.main-menu {
+  gap: clamp(10px, 2vh, 18px);
+}
+
 .screen-overlay h1 {
   margin: 0;
   font-size: clamp(2rem, 8vw, 4rem);
@@ -85,6 +89,22 @@ body {
 .menu-button:active {
   transform: translateY(2px);
   box-shadow: 0 2px #5c7e35;
+}
+
+.export-ai-game-button {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px;
+  border: 2px solid #805326;
+  border-radius: 12px;
+  background: linear-gradient(#fff8cf, #f1ca69);
+  color: #51361d;
+  font: 800 clamp(10px, 1.2vw, 14px) system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.export-ai-game-button[hidden] {
+  display: none;
 }
 
 .victory-summary {
