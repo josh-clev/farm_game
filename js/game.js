@@ -4,8 +4,9 @@ function showVictory(player) {
   victoryScreen.hidden = false;
 }
 
-async function startGame(againstAi) {
-  if (againstAi) FarmAi.start();
+async function startGame(againstAi, trainAi = false) {
+  if (againstAi) FarmAi.start(trainAi);
+  exportAiGameButton.hidden = !againstAi || !FarmAi.training;
   mainMenu.hidden = true;
   gameScene.hidden = false;
   turnAnnouncement.hidden = false;
@@ -14,8 +15,27 @@ async function startGame(againstAi) {
 }
 playButton.addEventListener("click", () => startGame(false));
 playAiButton.addEventListener("click", () => startGame(true));
-exportAiButton.hidden = !FarmAi.training;
+trainAiButton.hidden = !window.FarmGameData.aiTrainingEnabled;
+trainAiButton.addEventListener("click", () => startGame(true, true));
+importAiButton.hidden = !window.FarmGameData.aiTrainingEnabled;
+importAiButton.addEventListener("click", () => importAiInput.click());
+importAiInput.addEventListener("change", async () => {
+  if (!importAiInput.files.length) return;
+  try {
+    const merged = await FarmAi.importFiles(importAiInput.files);
+    trainingStatus.textContent = merged
+      ? `Merged ${merged} training file${merged === 1 ? "" : "s"}. Export to save the combined model.`
+      : "These training files were already included.";
+    exportAiButton.hidden = !FarmAi.hasTrainingData();
+  } catch (error) {
+    trainingStatus.textContent = error.message;
+  }
+  trainingStatus.hidden = false;
+  importAiInput.value = "";
+});
+exportAiButton.hidden = !window.FarmGameData.aiTrainingEnabled || !FarmAi.hasTrainingData();
 exportAiButton.addEventListener("click", FarmAi.exportModel);
+exportAiGameButton.addEventListener("click", FarmAi.exportModel);
 returnMenuButton.addEventListener("click", () => {
   location.reload();
 });

@@ -14,7 +14,13 @@
       <h1>Farm Game</h1>
       <button class="menu-button play-button" type="button">Play</button>
       <button class="menu-button play-ai-button" type="button">Play against AI</button>
-      <button class="menu-button export-ai-button" type="button" hidden>Export AI training</button>
+      <div class="training-controls">
+        <button class="menu-button train-ai-button" type="button">Train AI</button>
+        <button class="menu-button import-ai-button" type="button">Import AI training</button>
+        <button class="menu-button export-ai-button" type="button" hidden>Export AI training</button>
+        <input class="import-ai-input" type="file" accept=".js,.json" multiple hidden>
+      </div>
+      <p class="training-status" role="status" hidden></p>
     </section>
     <main class="game" aria-label="Farm game" hidden>
       <section class="board-layout">
@@ -66,6 +72,7 @@
           </button>
         </div>
         <button class="next-turn" type="button">Next Turn</button>
+        <button class="export-ai-game-button" type="button" hidden>Export AI training</button>
       </section>
 
       <div class="turn-announcement player-one" role="status" aria-live="polite" hidden>

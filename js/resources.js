@@ -158,6 +158,7 @@ async function discardResource(item) {
   if (pendingDiscardCount === 0 || Number(item.dataset.player) !== currentPlayer) return;
   const cropName = item.dataset.crop;
   if (playerResources[currentPlayer][cropName] === 0) return;
+  FarmAi.record(FarmAi.actionKeys("discard", cropName));
   playerResources[currentPlayer][cropName] -= 1;
   pendingDiscardCount -= 1;
   await updateResourcePool(currentPlayer, cropName);
