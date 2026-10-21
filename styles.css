@@ -197,7 +197,7 @@ body {
 
 .upgrade-slots {
   position: absolute;
-  z-index: 10;
+  z-index: 8;
   display: flex;
   gap: clamp(8px, 1.2vw, 14px);
   pointer-events: none;
@@ -205,12 +205,12 @@ body {
 
 .player-one-upgrade-slots {
   left: max(10px, env(safe-area-inset-left));
-  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 148px);
+  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 220px);
 }
 
 .player-two-upgrade-slots {
   right: max(10px, env(safe-area-inset-right));
-  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 148px);
+  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 220px);
 }
 
 .upgrade-slot {
@@ -1480,7 +1480,7 @@ body {
 
   .player-one-upgrade-slots,
   .player-two-upgrade-slots {
-    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 156px);
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 184px);
   }
 
   .resource-pool {
