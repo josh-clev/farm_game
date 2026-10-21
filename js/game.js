@@ -4,18 +4,20 @@ function showVictory(player) {
   victoryScreen.hidden = false;
 }
 
-playButton.addEventListener("click", async () => {
+async function startGame(againstAi) {
+  if (againstAi) FarmAi.start();
   mainMenu.hidden = true;
   gameScene.hidden = false;
   turnAnnouncement.hidden = false;
   await announceRound();
   announceTurn();
-});
+}
+playButton.addEventListener("click", () => startGame(false));
+playAiButton.addEventListener("click", () => startGame(true));
+exportAiButton.hidden = !FarmAi.training;
+exportAiButton.addEventListener("click", FarmAi.exportModel);
 returnMenuButton.addEventListener("click", () => {
-  victoryScreen.hidden = true;
-  gameScene.hidden = true;
-  turnAnnouncement.hidden = true;
-  mainMenu.hidden = false;
+  location.reload();
 });
 
 function setDesktopPreviewRatio() {
@@ -89,6 +91,7 @@ neutralPlots.slice(0, 4).forEach((plot) => plantCrop(plot, pickRandomCrop()));
 queueNextCropSpawn();
 
 grid.addEventListener("pointerup", (event) => {
+  if (gameScene.inert) return;
   const plot = event.target.closest(".plot");
   if (!plot) return;
 
@@ -104,6 +107,7 @@ grid.addEventListener("pointerup", (event) => {
 
 toolButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (gameScene.inert) return;
     if (pendingDiscardCount > 0) return;
     const tool = button.dataset.tool;
     selectedTool = selectedTool === tool ? null : tool;
@@ -111,33 +115,42 @@ toolButtons.forEach((button) => {
   });
 });
 
+async function purchaseShopItem(slotIndex) {
+  const card = shopCards[slotIndex];
+  const slot = shopSlots[slotIndex];
+  const item = shopItems[slot.itemKey];
+  if (slot.purchased || playerCoins[currentPlayer] < item.price) return;
+  FarmAi.record([FarmAi.itemKey(item)]);
+  playerCoins[currentPlayer] -= item.price;
+  slot.purchased = true;
+  updateCoinDisplay(currentPlayer);
+  if (item.upgrade) {
+    playerUpgrades[currentPlayer][item.upgrade] = (playerUpgrades[currentPlayer][item.upgrade] || 0) + 1;
+    if (item.upgrade in turnActions) turnActions[item.upgrade] += 1;
+    if (item.upgrade === "storage") updateResourceCapacity(currentPlayer);
+  } else if (item.seedCrop) {
+    selectedTool = `seed:${item.seedCrop}`;
+  } else {
+    selectedTool = item.tool;
+  }
+  await slideCardAway(card, card.parentElement, ".shop-card", 360, "up");
+  renderTools();
+}
+
 shopCards.forEach((card) => {
   activateOnPress(card, () => {
+    if (gameScene.inert) return;
     const slotIndex = shopCards.indexOf(card);
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
     if (slot.purchased) return;
     if (playerCoins[currentPlayer] < item.price) return;
-    openConfirmation(card, `Buy ${item.name} for ${item.price} coins?`, async () => {
-      playerCoins[currentPlayer] -= item.price;
-      slot.purchased = true;
-      updateCoinDisplay(currentPlayer);
-      if (item.upgrade) {
-        playerUpgrades[currentPlayer][item.upgrade] += 1;
-        if (item.upgrade in turnActions) turnActions[item.upgrade] += 1;
-        if (item.upgrade === "storage") updateResourceCapacity(currentPlayer);
-      } else if (item.seedCrop) {
-        selectedTool = `seed:${item.seedCrop}`;
-      } else {
-        selectedTool = item.tool;
-      }
-      await slideCardAway(card, card.parentElement, ".shop-card", 360, "up");
-      renderTools();
-    });
+    openConfirmation(card, `Buy ${item.name} for ${item.price} coins?`, () => purchaseShopItem(slotIndex));
   });
 });
 
 function handleOrderPress(event) {
+  if (gameScene.inert) return;
   const order = event.target.closest(".order-card");
   if (!order || event.target.closest(".confirmation-box")) return;
   const orderIndex = Number(order.dataset.order);
@@ -152,6 +165,7 @@ function handleOrderPress(event) {
 
 orderList.addEventListener("click", handleOrderPress);
 orderRoundCount.addEventListener("click", (event) => {
+  if (gameScene.inert) return;
   event.stopPropagation();
   openRoundDebugMenu();
 });
@@ -168,14 +182,16 @@ orderList.addEventListener("keydown", (event) => {
 
 document.querySelectorAll(".resource-list").forEach((resourceList) => {
   resourceList.addEventListener("click", (event) => {
+    if (gameScene.inert) return;
     const item = event.target.closest(".resource-item[data-crop]");
     if (item) discardResource(item);
   });
 });
 
-nextTurnButton.addEventListener("click", async () => {
+async function advanceTurn() {
   if (isActionLocked() || grid.querySelector(".is-treating") || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
   nextTurnButton.disabled = true;
+  FarmAi.finishTurn();
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
   const previousOrderPositions = captureCardPositions(orderList, ".order-card");
   const previousShopPositions = captureCardPositions(document.querySelector(".shop-list"), ".shop-card");
@@ -207,6 +223,7 @@ nextTurnButton.addEventListener("click", async () => {
     if (plot.dataset.crop) plot.dataset.turnWatered = "0";
   });
   currentPlayer = currentPlayer === 1 ? 2 : 1;
+  FarmAi.syncLock();
   await applyWeatherEvent();
   selectedTool = null;
   turnActions = {
@@ -225,6 +242,13 @@ nextTurnButton.addEventListener("click", async () => {
     }
   });
   announceTurn();
+  if (currentPlayer === 2 && gameScene.inert && victoryScreen.hidden) {
+    window.setTimeout(() => FarmAi.playTurn().catch(console.error), 450);
+  }
+}
+
+nextTurnButton.addEventListener("click", () => {
+  if (!gameScene.inert) advanceTurn();
 });
 
 renderTools();

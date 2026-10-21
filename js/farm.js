@@ -321,14 +321,17 @@ async function useTool(plot) {
     : null;
   if (selectedCrop) {
     if (!canPlantSeed(plot, selectedCrop)) return;
+    FarmAi.record(["plant", `plant:${selectedCrop.name}`]);
     plantCrop(plot, selectedCrop);
     selectedTool = null;
   } else if (selectedTool === "plot-upgrade") {
     if (!canUpgradePlot(plot)) return;
+    FarmAi.record(["plot-upgrade"]);
     plot.classList.add(currentPlayer === 1 ? "player-one-plot" : "player-two-plot");
     plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}, Player ${currentPlayer} territory`);
     selectedTool = null;
   } else if (selectedTool === "water") {
+    FarmAi.record(FarmAi.actionKeys("water", plot.dataset.crop));
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
     plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
     turnActions.water -= 1;
@@ -339,6 +342,7 @@ async function useTool(plot) {
     const harvestedCrop = plot.dataset.crop;
     const harvestingPlayer = currentPlayer;
     if (plot.classList.contains("is-harvesting")) return;
+    FarmAi.record(FarmAi.actionKeys("harvest", harvestedCrop));
     plot.classList.add("is-harvesting");
     turnActions.cut -= 1;
     selectedTool = null;
@@ -357,11 +361,13 @@ async function useTool(plot) {
     plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
     plot.classList.remove("is-harvesting");
   } else if (selectedTool === "weed-killer") {
+    FarmAi.record(["weed-killer"]);
     selectedTool = null;
     renderTools();
     await animateTreatment(plot, "weed-killer");
     await removeCrop(plot);
   } else if (selectedTool === "fertiliser") {
+    FarmAi.record(FarmAi.actionKeys("fertiliser", plot.dataset.crop));
     plot.dataset.water = String(Number(plot.dataset.water) + 3);
     selectedTool = null;
     updateCropProgress(plot);

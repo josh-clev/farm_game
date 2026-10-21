@@ -152,6 +152,7 @@ async function fillOrder(orderIndex) {
   if (!order || order.filled || !canFillOrder(order)) return;
   const card = orderList.querySelector(`[data-order="${orderIndex}"]`);
   if (!card) return;
+  FarmAi.record(["fill-order", ...order.items.map((item) => `fill-order:${item.crop}`)]);
 
   const runTransactionAnimation = async (animation) => {
     try {
