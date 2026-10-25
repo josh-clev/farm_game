@@ -44,9 +44,11 @@ let currentPlayer = 1;
 let selectedTool = null;
 let turnActions = { water: 3, cut: 1 };
 const playerUpgrades = {
-  1: { water: 0, cut: 0, storage: 0 },
-  2: { water: 0, cut: 0, storage: 0 },
+  1: { water: 0, cut: 0, storage: 0, market: 0 },
+  2: { water: 0, cut: 0, storage: 0, market: 0 },
 };
+const playerUpgradeSlots = { 1: [null, null], 2: [null, null] };
+let pendingUpgradePurchase = null;
 
 const shopItemKeys = Object.keys(shopItems);
 function drawShopItem(excludedKeys = new Set()) {
@@ -77,3 +79,4 @@ let turnsUntilOrderRefresh = 20;
 let currentRound = 1;
 const BASE_MAX_RESOURCES = 5;
 let pendingDiscardCount = 0;
+let discardAnimationRunning = false;

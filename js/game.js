@@ -112,6 +112,7 @@ queueNextCropSpawn();
 
 grid.addEventListener("pointerup", (event) => {
   if (gameScene.inert) return;
+  if (pendingUpgradePurchase) return;
   const plot = event.target.closest(".plot");
   if (!plot) return;
 
@@ -128,26 +129,73 @@ grid.addEventListener("pointerup", (event) => {
 toolButtons.forEach((button) => {
   button.addEventListener("click", () => {
     if (gameScene.inert) return;
-    if (pendingDiscardCount > 0) return;
+    if (pendingDiscardCount > 0 || pendingUpgradePurchase) return;
     const tool = button.dataset.tool;
     selectedTool = selectedTool === tool ? null : tool;
     renderTools();
   });
 });
 
-async function purchaseShopItem(slotIndex) {
+function chooseAiUpgradeReplacement() {
+  const upgrades = playerUpgradeSlots[2].map((itemKey, slotIndex) => ({
+    slotIndex,
+    upgrade: shopItems[itemKey]?.upgrade,
+  }));
+  return (upgrades.find(({ upgrade }) => upgrade !== "storage" && upgrade !== "market") || upgrades[0]).slotIndex;
+}
+
+function beginUpgradeReplacement(shopSlotIndex) {
+  pendingUpgradePurchase = { shopSlotIndex };
+  document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
+  turnAnnouncement.textContent = "Choose an upgrade to replace";
+  turnAnnouncement.classList.add("is-discarding");
+  renderUpgradeSlots();
+  renderShop();
+  renderTools();
+}
+
+async function purchaseShopItem(slotIndex, replacementSlotIndex = null) {
   const card = shopCards[slotIndex];
   const slot = shopSlots[slotIndex];
   const item = shopItems[slot.itemKey];
-  if (slot.purchased || playerCoins[currentPlayer] < item.price) return;
+  if (slot.purchased || playerCoins[currentPlayer] < item.price) return false;
+  if (item.upgrade && playerUpgradeSlots[currentPlayer].includes(slot.itemKey)) return false;
+  let upgradeSlotIndex = null;
+  if (item.upgrade) {
+    upgradeSlotIndex = playerUpgradeSlots[currentPlayer].indexOf(null);
+    if (upgradeSlotIndex < 0 && replacementSlotIndex === null) {
+      if (currentPlayer === 2 && gameScene.inert) replacementSlotIndex = chooseAiUpgradeReplacement();
+      else {
+        beginUpgradeReplacement(slotIndex);
+        return false;
+      }
+    }
+    if (upgradeSlotIndex < 0) upgradeSlotIndex = replacementSlotIndex;
+  }
   FarmAi.record([FarmAi.itemKey(item)]);
   playerCoins[currentPlayer] -= item.price;
   slot.purchased = true;
   updateCoinDisplay(currentPlayer);
   if (item.upgrade) {
-    playerUpgrades[currentPlayer][item.upgrade] = (playerUpgrades[currentPlayer][item.upgrade] || 0) + 1;
+    const replacedItemKey = playerUpgradeSlots[currentPlayer][upgradeSlotIndex];
+    const replacedUpgrade = replacedItemKey ? shopItems[replacedItemKey].upgrade : null;
+    if (replacedUpgrade) {
+      playerUpgrades[currentPlayer][replacedUpgrade] = 0;
+      if (replacedUpgrade in turnActions && turnActions[replacedUpgrade] > 0) {
+        turnActions[replacedUpgrade] -= 1;
+      }
+    }
+    playerUpgradeSlots[currentPlayer][upgradeSlotIndex] = slot.itemKey;
+    playerUpgrades[currentPlayer][item.upgrade] = 1;
     if (item.upgrade in turnActions) turnActions[item.upgrade] += 1;
-    if (item.upgrade === "storage") updateResourceCapacity(currentPlayer);
+    if (item.upgrade === "storage" || replacedUpgrade === "storage") {
+      updateResourceCapacity(currentPlayer);
+      beginDiscardSelection();
+    }
+    pendingUpgradePurchase = null;
+    turnAnnouncement.classList.remove("is-discarding");
+    if (pendingDiscardCount === 0) announceTurn();
+    renderUpgradeSlots();
   } else if (item.seedCrop) {
     selectedTool = `seed:${item.seedCrop}`;
   } else {
@@ -155,11 +203,21 @@ async function purchaseShopItem(slotIndex) {
   }
   await slideCardAway(card, card.parentElement, ".shop-card", 360, "up");
   renderTools();
+  renderShop();
+  return true;
 }
+
+document.querySelectorAll(".upgrade-slot").forEach((upgradeSlot) => {
+  activateOnPress(upgradeSlot, () => {
+    if (!pendingUpgradePurchase || Number(upgradeSlot.dataset.player) !== currentPlayer) return;
+    purchaseShopItem(pendingUpgradePurchase.shopSlotIndex, Number(upgradeSlot.dataset.slot));
+  });
+});
 
 shopCards.forEach((card) => {
   activateOnPress(card, () => {
     if (gameScene.inert) return;
+    if (pendingUpgradePurchase) return;
     const slotIndex = shopCards.indexOf(card);
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
@@ -209,7 +267,7 @@ document.querySelectorAll(".resource-list").forEach((resourceList) => {
 });
 
 async function advanceTurn() {
-  if (isActionLocked() || grid.querySelector(".is-treating") || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
+  if (isActionLocked() || pendingUpgradePurchase || grid.querySelector(".is-treating") || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
   nextTurnButton.disabled = true;
   FarmAi.finishTurn();
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());
@@ -272,4 +330,5 @@ nextTurnButton.addEventListener("click", () => {
 });
 
 renderTools();
+renderUpgradeSlots();
 announceTurn();

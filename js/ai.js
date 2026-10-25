@@ -205,7 +205,8 @@
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
     if (slot.purchased || playerCoins[2] < item.price) return false;
-    await purchaseShopItem(slotIndex);
+    const purchased = await purchaseShopItem(slotIndex);
+    if (!purchased) return false;
     previousAiAction = itemKey(item);
     return true;
   }
@@ -289,11 +290,14 @@
         }
       }
       const options = shopSlots.map((slot, index) => ({ slot, index, item: shopItems[slot.itemKey] }))
-        .filter(({ slot, item }) => !slot.purchased && item.price <= playerCoins[2]);
+        .filter(({ slot, item }) => !slot.purchased
+          && item.price <= playerCoins[2]
+          && !(item.upgrade && playerUpgradeSlots[2].includes(slot.itemKey)));
       const purchases = options.map((option) => {
         const { item } = option;
         const prior = item.upgrade === "water" ? 42 : item.upgrade === "cut" ? 36
           : item.upgrade === "storage" ? (totalResources(2) >= 4 ? 30 : 12)
+          : item.upgrade === "market" ? (totalResources(2) >= maxResources(2) ? 32 : 15)
           : item.seedCrop ? (orderDemand(item.seedCrop) ? 28 : 13)
           : item.tool === "fertiliser" ? 20 : 0;
         return { ...option, score: value([itemKey(item)], prior) - item.price / 4 };

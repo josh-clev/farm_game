@@ -155,20 +155,42 @@ function beginDiscardSelection() {
 }
 
 async function discardResource(item) {
-  if (pendingDiscardCount === 0 || Number(item.dataset.player) !== currentPlayer) return;
+  if (discardAnimationRunning || pendingDiscardCount === 0 || Number(item.dataset.player) !== currentPlayer) return;
   const cropName = item.dataset.crop;
   if (playerResources[currentPlayer][cropName] === 0) return;
+  discardAnimationRunning = true;
   FarmAi.record(FarmAi.actionKeys("discard", cropName));
-  playerResources[currentPlayer][cropName] -= 1;
-  pendingDiscardCount -= 1;
-  await updateResourcePool(currentPlayer, cropName);
-  if (pendingDiscardCount === 0) {
-    turnAnnouncement.classList.remove("is-discarding");
-    announceTurn();
-    updateDiscardSelection();
-  } else {
-    turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
-    updateDiscardSelection();
+  const marketSlotIndex = playerUpgradeSlots[currentPlayer].findIndex((itemKey) => itemKey === "market");
+  const marketSlot = marketSlotIndex >= 0
+    ? document.querySelector(`.upgrade-slots.player-${currentPlayer === 1 ? "one" : "two"}-upgrade-slots .upgrade-slot:nth-child(${marketSlotIndex + 1})`)
+    : null;
+  const crop = crops.find((entry) => entry.name === cropName);
+  const marketPayment = marketSlot && crop ? Math.floor(crop.marketValue / 2) : 0;
+  try {
+    if (marketPayment) {
+      await animateFlyingIcon(item, marketSlot, item.querySelector(".resource-icon"));
+    }
+    playerResources[currentPlayer][cropName] -= 1;
+    pendingDiscardCount -= 1;
+    await updateResourcePool(currentPlayer, cropName);
+    if (marketPayment) {
+      const coinItem = document.querySelector(`.resource-pool.${currentPlayer === 1 ? "player-one" : "player-two"}-pool .coin-item`);
+      await animateFlyingIcon(marketSlot, coinItem, coinItem.querySelector(".coin-icon"));
+      playerCoins[currentPlayer] += marketPayment;
+      earnedCoins[currentPlayer] += marketPayment;
+      soldResources[currentPlayer][cropName] += 1;
+      updateCoinDisplay(currentPlayer);
+    }
+    if (pendingDiscardCount === 0) {
+      turnAnnouncement.classList.remove("is-discarding");
+      announceTurn();
+      updateDiscardSelection();
+    } else {
+      turnAnnouncement.textContent = `Choose ${pendingDiscardCount} resource${pendingDiscardCount === 1 ? "" : "s"} to discard`;
+      updateDiscardSelection();
+    }
+  } finally {
+    discardAnimationRunning = false;
   }
   renderTools();
   renderOrders();

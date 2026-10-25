@@ -252,7 +252,7 @@ function renderTools() {
   });
 
   const mustUseWater = regularWater > 0 && hasWaterablePlots();
-  nextTurnButton.disabled = farmActionRunning || mustUseWater || pendingDiscardCount > 0;
+  nextTurnButton.disabled = farmActionRunning || mustUseWater || pendingDiscardCount > 0 || pendingUpgradePurchase;
   nextTurnButton.setAttribute(
     "aria-label",
     farmActionRunning
