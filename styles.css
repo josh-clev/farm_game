@@ -526,6 +526,7 @@ body {
 .shop-list {
   order: 1;
   display: flex;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: clamp(5px, 0.8vw, 10px);
   width: min(100%, 470px);
@@ -1357,7 +1358,6 @@ body {
     height: auto;
   }
 
-  .shop-list,
   .order-list {
     flex-wrap: wrap;
   }
@@ -1528,8 +1528,15 @@ body {
 .shop-list,
 .order-list {
   justify-content: center;
-  flex-wrap: wrap;
   margin-inline: auto;
+}
+
+.shop-list {
+  flex-wrap: nowrap;
+}
+
+.order-list {
+  flex-wrap: wrap;
 }
 
 .farm-grid {
