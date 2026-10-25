@@ -268,6 +268,23 @@ body {
 .is-missing-graphic::before { transform: rotate(45deg); }
 .is-missing-graphic::after { transform: rotate(-45deg); }
 
+.is-missing-auto-harvester {
+  position: relative;
+  border: 2px solid #805326;
+  background-color: #f3c66f;
+}
+
+.is-missing-auto-harvester::before {
+  position: absolute;
+  top: 22%;
+  left: 24%;
+  width: 52%;
+  height: 56%;
+  background: #805326;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  content: "";
+}
+
 .resource-list {
   display: flex;
   flex-wrap: wrap;
@@ -422,6 +439,7 @@ body {
 }
 
 .shop-board h2 {
+  position: relative;
   order: 2;
   margin: 8px 0 0;
 }
@@ -441,6 +459,14 @@ body {
   font-size: 0.8em;
   line-height: 1;
   vertical-align: middle;
+}
+
+.shop-refresh-count {
+  padding: 0;
+  color: #fff7c4;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .order-round-count {
@@ -485,6 +511,16 @@ body {
   border-radius: 4px;
   color: #51361d;
   font: inherit;
+}
+
+.round-debug-menu button {
+  padding: 3px 6px;
+  border: 1px solid #805326;
+  border-radius: 4px;
+  background: #fffbe3;
+  color: #51361d;
+  font: inherit;
+  cursor: pointer;
 }
 
 .shop-list {
@@ -800,6 +836,45 @@ body {
 
 .plot.is-harvesting {
   pointer-events: none;
+}
+
+.auto-harvester {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: 66%;
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 0;
+  border-radius: 12%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  box-shadow: 0 2px 0 rgb(65 45 20 / 55%);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.harvester-recharge-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 1px solid #805326;
+  border-radius: 999px;
+  background: #fff2a7;
+  color: #593616;
+  font: 1000 clamp(0.48rem, 1.2vw, 0.72rem) / 1 system-ui, sans-serif;
+  animation: harvester-recharge-flash 1.7s ease-in-out infinite;
+}
+
+.harvester-recharge-cost .coin-icon {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+@keyframes harvester-recharge-flash {
+  50% { opacity: 0.38; transform: scale(0.92); }
 }
 
 .harvest-poof,

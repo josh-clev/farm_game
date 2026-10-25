@@ -7,6 +7,7 @@ const cutIcons = document.querySelector(".cut-icons");
 const actionDock = document.querySelector(".action-dock");
 const orderList = document.querySelector(".order-list");
 const orderRoundCount = document.querySelector(".order-round-count");
+const shopRefreshCount = document.querySelector(".shop-refresh-count");
 const mainMenu = document.querySelector(".main-menu");
 const gameScene = document.querySelector(".game");
 const victoryScreen = document.querySelector(".victory-screen");

@@ -1,19 +1,19 @@
 function renderShop() {
-  const refreshCount = document.querySelector(".shop-refresh-count");
-  refreshCount.textContent = String(turnsUntilShopRefresh);
-  refreshCount.setAttribute("aria-label", `${turnsUntilShopRefresh} turns until shop refresh`);
+  shopRefreshCount.textContent = String(turnsUntilShopRefresh);
+  shopRefreshCount.setAttribute("aria-label", `${turnsUntilShopRefresh} turns until shop refresh`);
   shopCards.forEach((card, slotIndex) => {
     const slot = shopSlots[slotIndex];
     const item = shopItems[slot.itemKey];
     card.dataset.item = slot.itemKey;
     card.dataset.layoutKey = String(slotIndex);
     if (card.dataset.renderedItem !== slot.itemKey) {
-      card.innerHTML = `<span class="shop-icon is-missing-graphic" aria-hidden="true"></span><span class="shop-details"><span class="shop-price"><img class="coin-icon" src="assets/coin_icon.png" alt="">${item.price}</span></span>`;
+      const placeholderClass = item.asset === "auto_harvester" ? "is-missing-auto-harvester" : "is-missing-graphic";
+      card.innerHTML = `<span class="shop-icon ${placeholderClass}" aria-hidden="true"></span><span class="shop-details"><span class="shop-price"><img class="coin-icon" src="assets/coin_icon.png" alt="">${item.price}</span></span>`;
       card.dataset.renderedItem = slot.itemKey;
       loadGraphic(item.asset, (source) => {
         const icon = card.querySelector(".shop-icon");
         icon.style.backgroundImage = `url("${source}")`;
-        icon.classList.remove("is-missing-graphic");
+        icon.classList.remove("is-missing-graphic", "is-missing-auto-harvester");
       });
     }
     card.classList.toggle("is-upgrade", Boolean(item.upgrade));
@@ -34,6 +34,29 @@ function renderShop() {
         ? `${item.name}, already owned`
         : `${item.name}, costs ${item.price} coins`,
     );
+  });
+}
+
+function closeShopDebugMenu() {
+  document.querySelector(".shop-debug-menu")?.remove();
+  shopRefreshCount.setAttribute("aria-expanded", "false");
+}
+
+function openShopDebugMenu() {
+  if (document.querySelector(".shop-debug-menu")) {
+    closeShopDebugMenu();
+    return;
+  }
+  const menu = document.createElement("div");
+  menu.className = "round-debug-menu shop-debug-menu";
+  menu.setAttribute("role", "dialog");
+  menu.setAttribute("aria-label", "Shop debug menu");
+  menu.innerHTML = '<button type="button">Reshuffle shop</button>';
+  shopRefreshCount.parentElement.append(menu);
+  shopRefreshCount.setAttribute("aria-expanded", "true");
+  menu.querySelector("button").addEventListener("click", async () => {
+    closeShopDebugMenu();
+    await refreshShop();
   });
 }
 
@@ -80,6 +103,18 @@ async function refreshShop() {
   renderShop();
   animateCardLayout(shopList, ".shop-card", new Map(), new Set(shopCards.map((card) => card.dataset.layoutKey)));
 }
+
+shopRefreshCount.addEventListener("click", (event) => {
+  if (gameScene.inert) return;
+  event.stopPropagation();
+  openShopDebugMenu();
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".shop-debug-menu") && !event.target.closest(".shop-refresh-count")) {
+    closeShopDebugMenu();
+  }
+});
 
 function replacePurchasedShopItems() {
   const visibleKeys = new Set(shopSlots.filter((slot) => !slot.purchased).map((slot) => slot.itemKey));
