@@ -22,8 +22,8 @@ const exportAiButton = document.querySelector(".export-ai-button");
 const exportAiGameButton = document.querySelector(".export-ai-game-button");
 const returnMenuButton = document.querySelector(".return-menu-button");
 const allShopCards = [...document.querySelectorAll(".shop-card")];
-const shopCards = allShopCards.slice(0, 3);
-allShopCards.slice(3).forEach((card) => { card.hidden = true; });
+const shopCards = allShopCards.slice(0, 5);
+allShopCards.slice(5).forEach((card) => { card.hidden = true; });
 const { shopItems, crops } = window.FarmGameData;
 const {
   activateOnPress,
