@@ -277,6 +277,7 @@ document.querySelectorAll(".resource-list").forEach((resourceList) => {
 
 async function advanceTurn() {
   if (isActionLocked() || pendingUpgradePurchase || grid.querySelector(".is-treating") || (getRegularWaterActions() > 0 && hasWaterablePlots()) || pendingDiscardCount > 0) return;
+  FarmGameAudio.playSound("next-turn");
   nextTurnButton.disabled = true;
   FarmAi.finishTurn();
   document.querySelectorAll(".confirmation-box").forEach((box) => box.remove());

@@ -48,6 +48,7 @@
       "cancel-click": () => tone(180, 0.12, "triangle", 0.035),
       "shop-click": () => tone(420, 0.07, "square", 0.022),
       "place-shop-item": () => { tone(440, 0.08, "triangle", 0.04); tone(660, 0.14, "sine", 0.03, 0.055); },
+      "next-turn": () => { tone(280, 0.09, "triangle", 0.035); tone(560, 0.16, "sine", 0.03, 0.06); },
     };
     sounds[name]?.();
   }
