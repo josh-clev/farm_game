@@ -595,7 +595,14 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.9em;
   white-space: nowrap;
+}
+
+.shop-price .coin-icon {
+  width: 1em;
 }
 
 .order-list {
