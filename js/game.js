@@ -208,6 +208,7 @@ async function purchaseShopItem(slotIndex, replacementSlotIndex = null) {
     selectedTool = item.tool;
   }
   await slideCardAway(card, card.parentElement, ".shop-card", 360, "up");
+  FarmGameAudio.playSound("place-shop-item");
   renderTools();
   renderShop();
   return true;
@@ -229,6 +230,7 @@ shopCards.forEach((card) => {
     const item = shopItems[slot.itemKey];
     if (slot.purchased) return;
     if (playerCoins[currentPlayer] < item.price) return;
+    FarmGameAudio.playSound("shop-click");
     openConfirmation(card, `Buy ${item.name} for ${item.price} coins?`, () => purchaseShopItem(slotIndex));
   });
 });
@@ -240,6 +242,7 @@ function handleOrderPress(event) {
   const orderIndex = Number(order.dataset.order);
   const orderData = orders[orderIndex];
   if (!orderData || !canFillOrder(orderData)) return;
+  FarmGameAudio.playSound("order-click");
   const rewardSummary = [
     orderData.coinReward > 0 ? `${orderData.coinReward} coins` : "",
     orderData.renownReward > 0 ? `${orderData.renownReward} renown` : "",

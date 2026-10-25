@@ -448,6 +448,7 @@ async function useTool(plot) {
     createAutoHarvester(plot, currentPlayer);
     selectedTool = null;
   } else if (selectedTool === "water") {
+    FarmGameAudio.playSound("water");
     FarmAi.record(FarmAi.actionKeys("water", plot.dataset.crop));
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
     plot.dataset.turnWatered = String(Number(plot.dataset.turnWatered || 0) + 1);
@@ -460,6 +461,7 @@ async function useTool(plot) {
     const harvestedCrop = plot.dataset.crop;
     const harvestingPlayer = currentPlayer;
     if (plot.classList.contains("is-harvesting")) return;
+    FarmGameAudio.playSound("harvest");
     FarmAi.record(FarmAi.actionKeys("harvest", harvestedCrop));
     plot.classList.add("is-harvesting");
     turnActions.cut -= 1;

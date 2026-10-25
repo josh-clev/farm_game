@@ -55,9 +55,13 @@
     ["click", "pointerdown", "pointerup"].forEach((eventName) => {
       confirmation.addEventListener(eventName, (event) => event.stopPropagation());
     });
-    confirmation.querySelector(".cancel").addEventListener("click", () => closeConfirmation(card));
+    confirmation.querySelector(".cancel").addEventListener("click", () => {
+      FarmGameAudio.playSound("cancel-click");
+      closeConfirmation(card);
+    });
     confirmation.querySelector(".confirm").addEventListener("click", async () => {
       if (actionLocked) return;
+      FarmGameAudio.playSound("confirm-click");
       actionLocked = true;
       confirmation.querySelectorAll("button").forEach((button) => { button.disabled = true; });
       try {
