@@ -97,9 +97,20 @@ function roundRewardTypes(round) {
   return types;
 }
 
+function createRoundOrders(round) {
+  const rewardTypes = roundRewardTypes(round);
+  let generatedOrders = [];
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    generatedOrders = rewardTypes.map((type) => createOrder(type));
+    const requestedCrops = new Set(generatedOrders.flatMap((order) => order.items.map((item) => item.crop)));
+    if (requestedCrops.size >= 3) return generatedOrders;
+  }
+  return generatedOrders;
+}
+
 function setDebugRound(round) {
   currentRound = Math.max(1, Math.floor(Number(round) || 1));
-  orders = roundRewardTypes(currentRound).map((type) => createOrder(type));
+  orders = createRoundOrders(currentRound);
   renderOrders();
 }
 
@@ -141,7 +152,7 @@ async function refreshOrders() {
     ),
   );
   currentRound += 1;
-  orders = roundRewardTypes(currentRound).map((type) => createOrder(type));
+  orders = createRoundOrders(currentRound);
   renderOrders();
   await announceRound();
   animateCardLayout(orderList, ".order-card", new Map(), new Set(orders.map((order) => String(order.id))));

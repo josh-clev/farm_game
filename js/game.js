@@ -47,7 +47,7 @@ function setDesktopPreviewRatio() {
 setDesktopPreviewRatio();
 window.addEventListener("resize", setDesktopPreviewRatio);
 buildResourcePools();
-orders = Array.from({ length: 5 }, createOrder);
+orders = createRoundOrders(currentRound);
 renderOrders();
 
 loadGraphic("grass-background", (source) => {
