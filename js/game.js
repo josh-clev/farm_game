@@ -116,6 +116,12 @@ grid.addEventListener("pointerup", (event) => {
   const plot = event.target.closest(".plot");
   if (!plot) return;
 
+  const harvester = event.target.closest(".auto-harvester");
+  if (harvester) {
+    requestAutoHarvesterRecharge(harvester);
+    return;
+  }
+
   if (selectedTool && plot.classList.contains("can-use-tool")) {
     useTool(plot);
     return;

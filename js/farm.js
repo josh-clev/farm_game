@@ -76,6 +76,111 @@ function canUpgradePlot(plot) {
     && !plot.querySelector(".spawn-timer");
 }
 
+function canPlaceAutoHarvester(plot) {
+  return getPlotOwner(plot) === currentPlayer
+    && !plot.dataset.crop
+    && !plot.querySelector(".spawn-timer")
+    && !plot.querySelector(".auto-harvester");
+}
+
+function createAutoHarvester(plot, owner) {
+  const harvester = document.createElement("span");
+  harvester.className = "auto-harvester is-missing-auto-harvester";
+  harvester.setAttribute("role", "button");
+  harvester.tabIndex = 0;
+  harvester.dataset.owner = String(owner);
+  harvester.dataset.charged = "true";
+  harvester.setAttribute("aria-label", `Charged auto-harvester owned by Player ${owner}`);
+  harvester.setAttribute("aria-pressed", "false");
+  loadGraphic("auto_harvester", (source) => {
+    harvester.style.backgroundImage = `url("${source}")`;
+    harvester.classList.remove("is-missing-auto-harvester");
+  });
+  harvester.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    requestAutoHarvesterRecharge(harvester);
+  });
+  plot.append(harvester);
+}
+
+function setHarvesterCharge(harvester, charged) {
+  harvester.dataset.charged = String(charged);
+  harvester.classList.toggle("is-depleted", !charged);
+  harvester.setAttribute(
+    "aria-label",
+    charged
+      ? `Charged auto-harvester owned by Player ${harvester.dataset.owner}`
+      : `Auto-harvester owned by Player ${harvester.dataset.owner}, recharge for 5 coins`,
+  );
+  harvester.replaceChildren();
+  if (!charged) {
+    const rechargeCost = document.createElement("span");
+    rechargeCost.className = "harvester-recharge-cost";
+    rechargeCost.setAttribute("aria-hidden", "true");
+    rechargeCost.innerHTML = '5 <span class="coin-icon"></span>';
+    harvester.append(rechargeCost);
+  }
+}
+
+function areAdjacentPlots(first, second) {
+  const firstIndex = Number(first.dataset.plot);
+  const secondIndex = Number(second.dataset.plot);
+  return Math.abs(Math.floor(firstIndex / 5) - Math.floor(secondIndex / 5))
+    + Math.abs((firstIndex % 5) - (secondIndex % 5)) === 1;
+}
+
+async function harvestWithAutoHarvester(harvester, plot) {
+  if (harvester.dataset.charged !== "true" || !plot.dataset.crop || plot.classList.contains("is-harvesting")) return false;
+  const cropName = plot.dataset.crop;
+  const owner = Number(harvester.dataset.owner);
+  plot.classList.add("is-harvesting", "is-auto-harvesting");
+  setHarvesterCharge(harvester, false);
+  await animateHarvest(plot, cropName, owner);
+  plot.querySelector(".crop-progress")?.remove();
+  delete plot.dataset.crop;
+  delete plot.dataset.water;
+  delete plot.dataset.turnWatered;
+  delete plot.dataset.waterNeeded;
+  plot.classList.remove("fully-grown", "is-auto-harvesting", "is-harvesting");
+  playerResources[owner][cropName] += 1;
+  await updateResourcePool(owner, cropName);
+  plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}`);
+  renderOrders();
+  return true;
+}
+
+async function triggerAutoHarvesters(readyPlots) {
+  const availablePlots = readyPlots.filter((plot) => plot.dataset.crop && Number(plot.dataset.water) >= Number(plot.dataset.waterNeeded));
+  if (!availablePlots.length) return;
+  const harvesters = [...grid.querySelectorAll('.auto-harvester[data-charged="true"]')];
+  for (const harvester of harvesters) {
+    const harvesterPlot = harvester.closest(".plot");
+    const choices = availablePlots.filter((plot) => areAdjacentPlots(harvesterPlot, plot) && !plot.classList.contains("is-harvesting"));
+    if (!choices.length) continue;
+    const target = choices[Math.floor(Math.random() * choices.length)];
+    await harvestWithAutoHarvester(harvester, target);
+    const targetIndex = availablePlots.indexOf(target);
+    if (targetIndex >= 0) availablePlots.splice(targetIndex, 1);
+  }
+  renderTools();
+}
+
+async function rechargeAutoHarvester(harvester) {
+  const owner = Number(harvester.dataset.owner);
+  if (owner !== currentPlayer || harvester.dataset.charged === "true" || playerCoins[owner] < 5) return;
+  const coinItem = document.querySelector(`.resource-pool.${owner === 1 ? "player-one" : "player-two"}-pool .coin-item`);
+  await animateFlyingIcon(coinItem, harvester, coinItem?.querySelector(".coin-icon"));
+  playerCoins[owner] -= 5;
+  updateCoinDisplay(owner);
+  setHarvesterCharge(harvester, true);
+}
+
+function requestAutoHarvesterRecharge(harvester) {
+  if (Number(harvester.dataset.owner) !== currentPlayer || harvester.dataset.charged === "true" || playerCoins[currentPlayer] < 5) return;
+  openConfirmation(harvester, "Recharge this auto-harvester for 5 coins?", () => rechargeAutoHarvester(harvester));
+}
+
 function plantCrop(plot, crop) {
   const cropIcon = document.createElement("span");
   cropIcon.className = "crop is-loading";
@@ -185,6 +290,7 @@ function updateCropProgress(plot) {
 
 function canUseTool(plot, tool) {
   if (tool === "plot-upgrade") return canUpgradePlot(plot);
+  if (tool === "auto-harvester") return canPlaceAutoHarvester(plot);
   if (!plot.dataset.crop) return false;
   if (!canInteractWithPlot(plot, tool)) return false;
 
@@ -207,6 +313,8 @@ function updateEligiblePlots() {
       ? canPlantSeed(plot, selectedCrop)
       : selectedTool === "plot-upgrade"
       ? canUpgradePlot(plot)
+      : selectedTool === "auto-harvester"
+      ? canPlaceAutoHarvester(plot)
       : selectedTool === "weed-killer" || selectedTool === "fertiliser"
       ? true
       : turnActions[selectedTool] > 0;
@@ -297,6 +405,7 @@ async function applyWeatherEvent() {
 
   await animateWeather(weather);
   const cropsToRemove = [];
+  const newlyReadyPlots = [];
   grid.querySelectorAll(".plot[data-crop]").forEach((plot) => {
     const water = Number(plot.dataset.water);
     const maxWater = Number(plot.dataset.waterNeeded);
@@ -305,10 +414,14 @@ async function applyWeatherEvent() {
       : Math.max(0, water - 1);
     plot.dataset.water = String(nextWater);
     if (weather === "drought" && water === 0) cropsToRemove.push(plot);
-    else updateCropProgress(plot);
+    else {
+      updateCropProgress(plot);
+      if (water < maxWater && nextWater >= maxWater) newlyReadyPlots.push(plot);
+    }
   });
 
   await Promise.all(cropsToRemove.map(removeCrop));
+  await triggerAutoHarvesters(newlyReadyPlots);
 }
 
 async function useTool(plot) {
@@ -330,6 +443,10 @@ async function useTool(plot) {
     plot.classList.add(currentPlayer === 1 ? "player-one-plot" : "player-two-plot");
     plot.setAttribute("aria-label", `Farm plot ${Number(plot.dataset.plot) + 1}, Player ${currentPlayer} territory`);
     selectedTool = null;
+  } else if (selectedTool === "auto-harvester") {
+    if (!canPlaceAutoHarvester(plot)) return;
+    createAutoHarvester(plot, currentPlayer);
+    selectedTool = null;
   } else if (selectedTool === "water") {
     FarmAi.record(FarmAi.actionKeys("water", plot.dataset.crop));
     plot.dataset.water = String(Number(plot.dataset.water) + 1);
@@ -338,6 +455,7 @@ async function useTool(plot) {
     updateCropProgress(plot);
     renderTools();
     await animateTreatment(plot, "water");
+    if (Number(plot.dataset.water) >= Number(plot.dataset.waterNeeded)) await triggerAutoHarvesters([plot]);
   } else if (selectedTool === "cut") {
     const harvestedCrop = plot.dataset.crop;
     const harvestingPlayer = currentPlayer;
@@ -372,6 +490,7 @@ async function useTool(plot) {
     selectedTool = null;
     updateCropProgress(plot);
     await animateTreatment(plot, "fertiliser");
+    if (Number(plot.dataset.water) >= Number(plot.dataset.waterNeeded)) await triggerAutoHarvesters([plot]);
   }
 
   if (selectedTool && turnActions[selectedTool] === 0) selectedTool = null;

@@ -27,6 +27,7 @@
     "harvest-upgrade": { name: "Harvest Upgrade", price: 40, asset: "harvest_upgrade_icon", upgrade: "cut" },
     "storage-upgrade": { name: "Storage Upgrade", price: 20, asset: "storage_upgrade", upgrade: "storage" },
     market: { name: "Market", price: 40, asset: "market", upgrade: "market" },
+    "auto-harvester": { name: "Auto-Harvester", price: 35, asset: "auto_harvester", tool: "auto-harvester" },
     ...seedItems,
   };
 
