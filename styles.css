@@ -4,6 +4,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Keep the five shop cards aligned to the same rail width as the orders. */
+.shop-card {
+  flex: 0 0 calc((100% - 16px) / 5);
+  min-width: 0;
+  grid-template-columns: clamp(20px, 3vw, 30px) minmax(0, 1fr);
+  padding-inline: 4px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1727,6 +1735,13 @@ body {
   min-width: 0;
 }
 
+.shop-card {
+  flex: 0 0 calc((100% - 16px) / 5);
+  min-width: 0;
+  grid-template-columns: clamp(20px, 3vw, 30px) minmax(0, 1fr);
+  padding-inline: 4px;
+}
+
 .farm-grid {
   transform: none;
 }
@@ -1985,4 +2000,12 @@ body {
     padding: 3px;
     font-size: 10px;
   }
+}
+
+/* Keep the five shop cards aligned to the same rail width as the orders. */
+.shop-card {
+  flex: 0 0 calc((100% - 16px) / 5);
+  min-width: 0;
+  grid-template-columns: clamp(20px, 3vw, 30px) minmax(0, 1fr);
+  padding-inline: 4px;
 }
