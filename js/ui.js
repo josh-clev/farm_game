@@ -37,8 +37,7 @@
   function closeConfirmation(card) {
     const confirmation = card.querySelector(".confirmation-box");
     if (!confirmation) return;
-    confirmation.classList.remove("is-open");
-    confirmation.addEventListener("transitionend", () => confirmation.remove(), { once: true });
+    confirmation.remove();
   }
 
   function openConfirmation(card, label, onConfirm) {
@@ -53,7 +52,9 @@
       <button class="confirmation-choice confirm" type="button" aria-label="Confirm">✓</button>
       <button class="confirmation-choice cancel" type="button" aria-label="Cancel">✕</button>
     `;
-    confirmation.addEventListener("click", (event) => event.stopPropagation());
+    ["click", "pointerdown", "pointerup"].forEach((eventName) => {
+      confirmation.addEventListener(eventName, (event) => event.stopPropagation());
+    });
     confirmation.querySelector(".cancel").addEventListener("click", () => closeConfirmation(card));
     confirmation.querySelector(".confirm").addEventListener("click", async () => {
       if (actionLocked) return;
@@ -62,6 +63,7 @@
       try {
         await onConfirm();
       } finally {
+        closeConfirmation(card);
         actionLocked = false;
       }
     });
